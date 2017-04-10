@@ -3,16 +3,20 @@
 The intention of this project is to create a dictionary of the languages described by JRR Tolkien. 
 Of course there are already a number of Elvish dictionaries out there, but anything that contains a fixed vocabulaire soon becomes deprecated with the ongoing changes and updates of the corpus of linguistic data published in Parma Eldalamberon and Vinya Tengwar.
 
-Therefore we want to create a dictionary that uses a well-designed database that is centrally managed, so that periodical updates can be pushed to (or pulled from) any client application that uses it (we're still discussing about how to fill in that management part).
+Therefore we want to create a dictionary that uses a well-designed database that will be updated as new content becomes available. 
+We're still discussing about how to fill that in, but the central idea is to have a global database that is reachable online, and next to that, every client application will have a local database that is initially copied from the global database. If changes are submitted to the global database, we could then notify the clients that an update is available, so that they can download the update and apply that on their own copy. 
+We could also have the clients check for updates periodically, eliminating the need for a notification. 
 
-We wanted this dictionary to be as thorough and complete as possible while also offering the flexibility for the user to add their own reconstructed vocabulary.
+Local clients can add their own (reconstructed) vocabulary if they want, but those changes will not be pushed to the central database. Maybe it would be useful for the client application to have an additional export / import feature for local changes, so that, say, a group of users could share reconstructed entries. 
+
+We wanted this dictionary to be as thorough and complete as possible while also offering the flexibility for the user to add their own (reconstructed) entries on their local copy of the data set (*note that this not the same as adding new content to the database!*)
 
 In a next stage we will focus on building a client application (possibly using Python and Kivy) that uses this database, although anyone is of course free to build their own web-based, desktop or mobile application as a front-end. 
-Of course, there will also be the possibility to enter or edit the central database. This, too, is still being discussed. 
+Of course, there will also be the possibility to enter or edit the central database. Supposedly we could use the same functionality for *editing the global database* as for *local edits*, where the first would require some kind of authorisation step to prevent vandalism :) But all this is still being discussed anyhow. 
 
-As starting point we decided to 'fork' Paul Strack's Eldamo project @ https://github.com/pfstrack/eldamo by translating his XML-based data model to a relational model. The model of this first commit allows all the data also found in Eldamo.xml, with the exception of the inflection table elements. 
+As starting point we decided to 'fork' Paul Strack's phenomenal effort, the Eldamo project @ https://github.com/pfstrack/eldamo by translating his XML-based data model to a relational model. The model of this first commit allows all the data also found in Eldamo.xml, with the exception of the inflection table elements. 
 
-It is likely that the model will evolve somewhat in the future; if only to allow for local user entries or to facilitate the data entry and management.
+It is likely that the model will evolve somewhat in the future.
 
 In this initial commit are included:
 
