@@ -16,5 +16,6 @@ It is likely that the model will evolve somewhat in the future; if only to allow
 
 In this initial commit are included:
 
-- a MySQL dump file containing both db creation DDL and data insert scripts
-- a diagram of the database table structure 
+- eldamo_db.sql: a MySQL dump file containing both db creation DDL and data insert scripts
+- eldamo-diagram.png: a diagram of the database table structure 
+- eldamo1.pl: a Perl script written tp parse the eldamo.xml data. Mind that this is a very 'rough' script, needing commenting and uncommenting parts in a certain order to create the table scripts. Use at your own risk,
