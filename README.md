@@ -1,7 +1,7 @@
 # eldamo-relationaldb
 
 The intention of this project is to create a dictionary of the languages described by JRR Tolkien. 
-Of course there are already a number of Elvish dictionaries out there, but anything that contains a fixed vocabulaire soon becomes deprecated with the ongoing changes and updates of the corpus of linguistic data published in Parma Eldalamberon and Vinya Tengwar.
+Of course there are already a number of Elvish dictionaries out there, but anything that contains a fixed vocabulaire soon becomes deprecated with the ongoing changes and updates of the corpus of linguistic data, as published in Parma Eldalamberon (http://www.eldalamberon.com/) and Vinyar Tengwar (http://www.elvish.org/VT/).
 
 Therefore we want to create a dictionary that uses a well-designed database that will be updated as new content becomes available. 
 We're still discussing about how to fill that in, but the central idea is to have a global database that is reachable online, and next to that, every client application will have a local database that is initially copied from the global database. If changes are submitted to the global database, we could then notify the clients that an update is available, so that they can download the update and apply that on their own copy. 
