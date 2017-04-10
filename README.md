@@ -27,4 +27,4 @@ In this initial commit are included:
 - eldamo1.pl: the Perl script that I wrote to parse the eldamo.xml data with. Mind that this is a very 'rough' script, needing commenting and uncommenting parts in a certain order to create the table scripts. Use at your own risk.
 
 - - - - - - - - - -
-(*)Kivy is a cross-platform GUI library for Python applications https://kivy.org/#home so: build once & deploy on Linux, Windows, OS X, Android and iOS
+*(*)Kivy is a cross-platform GUI library for Python applications https://kivy.org/#home so: build once & deploy on Linux, Windows, Mac OS, Android and iOS*
