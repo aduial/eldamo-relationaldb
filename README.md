@@ -7,6 +7,8 @@ Therefore we want to create a dictionary that uses a well-designed database that
 We're still discussing about how to fill that in, but the central idea is to have a global database that is reachable online, and next to that, every client application will have a local database that is initially copied from the global database. If changes are submitted to the global database, we could then notify the clients that an update is available, so that they can download the update and apply that on their own copy. 
 We could also have the clients check for updates periodically, eliminating the need for a notification. 
 
+The advantage of this set-up is that the client would also function if they are offline. It will also be significantly faster if the data needn't be fetched over the internet. Note that even the very large Eldamo data set with all its notes, grammatical and phonological information still adds only 7 Mb of data at the very most, which is peanuts compared to the size of the average application. 
+
 Local clients can add their own (reconstructed) vocabulary if they want, but those changes will not be pushed to the central database. Maybe it would be useful for the client application to have an additional export / import feature for local changes, so that, say, a group of users could share reconstructed entries. 
 
 We wanted this dictionary to be as thorough and complete as possible while also offering the flexibility for the user to add their own (reconstructed) entries on their local copy of the data set (*note that this not the same as adding new content to the database!*)
