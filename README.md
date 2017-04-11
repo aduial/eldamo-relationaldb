@@ -30,3 +30,4 @@ In this initial commit are included:
 (1) Kivy is a cross-platform GUI library for Python applications https://kivy.org/#home so: build once & deploy on Linux, Windows, Mac OS, Android and iOS (2)
 
 (2) OTOH: it turns out that it's much easier to create and deploy cross-platform Java GUI applications than it used to be when I last looked into it, for instance with *Codename One* (https://en.wikipedia.org/wiki/Codename_One). If that works well it could be a huge timesaver if you happen to be familiar with Java (like myself).
+
