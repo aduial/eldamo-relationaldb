@@ -1,5 +1,28 @@
 # eldamo-relationaldb
 
+# update for version 0.2
+
+- eldamo-diagram.png: an updated diagram of version 0.2 the database table structure 
+- eldamo.pl: the Perl script used to parse the eldamo.xml data with. This script is much better than the previous one; it will parse the XML file and can write all SQL data scripts in one pass.
+The XML filename is still hard-coded in the script but can be easily changed. The script uses, and if necessary, creates a directory called 'output' in the current directory and will write the SQL files in there. If the directory and files already exist they will be overwritten. 
+- usage: eldamo.pl [ -s | -h ]
+- - the -s switch will create SQL output 
+- - the -h switch will generate some debug info in SDOUT
+
+- I used Perl v5.24.1 with some additional modules that you might need to install (e.g. using CPAN):
+
+- - XML::Twig
+- - Utils qw(:all)
+- - Acme::Comment type => 'C++'
+- - feature 'say'
+- - File::Path qw(make_path)
+only if you provide the -s switch; you can also use the -h
+
+- sql (directory) contains the create_tables.sql script to create the table with indexes and foreign keys. The individual SQL files can then be imported into the tables. I will change this to one SQL file asap, as it is a bit cumbersome (order matters, for one thing, due to the FK constraints).
+
+
+#background
+
 The intention of this project is to create a dictionary of the languages described by JRR Tolkien. 
 Of course there are already a number of Elvish dictionaries out there, but anything that contains a fixed vocabulary soon becomes deprecated with the ongoing changes and updates of the corpus of linguistic data, as published in Parma Eldalamberon (http://www.eldalamberon.com/) and Vinyar Tengwar (http://www.elvish.org/VT/).
 
@@ -17,14 +40,10 @@ In a next stage we will focus on building a client application (possibly using P
 Of course, there will also be the possibility to enter or edit the central database. Supposedly we could use the same functionality for *editing the global database* as for *local edits*, where the first would require some kind of authorisation step to prevent vandalism :) But all this is still being discussed anyhow. 
 
 As starting point we decided to 'fork' Paul Strack's phenomenal effort, the Eldamo project @ https://github.com/pfstrack/eldamo by translating his XML-based data model to a relational model. The model of this first commit allows all the data also found in Eldamo.xml, with the exception of the inflection table elements. 
-
-It is likely that the model will evolve somewhat in the future.
-
 In this initial commit are included:
 
-- eldamo_db.sql: a MySQL dump file containing both db creation DDL and data insert scripts
-- eldamo-diagram.png: a diagram of the database table structure 
-- eldamo1.pl: the Perl script that I wrote to parse the eldamo.xml data with. Mind that this is a very 'rough' script, needing commenting and uncommenting parts in a certain order to create the table scripts. Use at your own risk.
+
+
 
 - - - - - - - - - -
 (1) Kivy is a cross-platform GUI library for Python applications https://kivy.org/#home so: build once & deploy on Linux, Windows, Mac OS, Android and iOS (2)
