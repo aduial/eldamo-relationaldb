@@ -1,11 +1,13 @@
 # eldamo-relationaldb
 
-# update for version 0.2
+# update for version 0.2.1
 This release is compatible with eldamo v. 0.5.5
 
 Description of the files:
 
-- eldamo-diagram.png: an updated diagram of version 0.2 the database table structure 
+- eldamo-diagram.png: an updated diagram of version 0.2.1 the database table structure 
+- changed from 0.2: changed the name of the 'to-form_id' column in RULESEQUENCE to 
+stage_form_id'
 - eldamo.pl: the Perl script used to parse the eldamo.xml data with. This script is much better than the previous one; it will parse the XML file and can write all SQL data scripts in one pass.
 The XML filename is still hard-coded in the script but can be easily changed. The script uses, and if necessary, creates a directory called 'output' in the current directory and will write the SQL files in there. If the directory and files already exist they will be overwritten. 
 ### - NOTE If you want to run this script on a newly downloaded eldamo data xml file you will have to manually carry out one small edit: `<language-cat ... > ... </language-cat>` in the XML needs to be changed into `<language ...> ... </language>`
@@ -21,8 +23,7 @@ The XML filename is still hard-coded in the script but can be easily changed. Th
 >     feature 'say'
 >     File::Path qw(make_path)
 
-- sql (directory) contains the create_tables.sql script to create the table with indexes and foreign keys. The individual SQL files can then be imported into the tables. I will change this to one SQL file asap, as it is a bit cumbersome (order matters, for one thing, due to the FK constraints).
-
+- the sql (directory) contains zipped files containing the database structure, data, and both
 
 #background
 

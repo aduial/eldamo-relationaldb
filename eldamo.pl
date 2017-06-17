@@ -284,10 +284,9 @@ sub hashlangs{
 sub harvestlangs{
 	my ($lang, $parent_uid) = @_;
 	foreach my $langdoctype (@langdocs){crunchlangdocs($lang, $langdoctype);} # see above
-	if (defined $lang->att('id')){
-		  $langshashbykey {$lang_uid} = $lang->att('id') ;
-		  push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '".(defined $lang->att('name') ? $lang->att('name') : "NULL")."', ".(defined $lang->att('id') ? "'".$lang->att('id')."'" : "NULL").", ".(defined $parent_uid ? $parent_uid : "NULL").");" ;
-	}
+	$langshashbykey {$lang_uid} = $lang->att('id') if (defined $lang->att('id'));
+	push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '".(defined $lang->att('name') ? $lang->att('name') : "NULL")."', ".(defined $lang->att('id') ? "'".$lang->att('id')."'" : "NULL").", ".(defined $parent_uid ? $parent_uid : "NULL").");" ;
+	
 	$parent_uid = $lang_uid;
 	$lang_uid++;
 	foreach my $sublang ($lang->children('language')){harvestlangs($sublang, $parent_uid);}
@@ -329,12 +328,17 @@ sub hashcats{
 
 sub harvestcats{
 	my ($cats) = @_;
+	my $label = '';
 	foreach my $parentcat ($cats->children('cat-group')){
 		$catshashbykey {$parentcat_uid} = $parentcat->att('id');
-		push @cat_rows, "INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES ($parentcat_uid, '".$parentcat->att('label')."', NULL);" ;
+		$label = $parentcat->att('label');
+		$label =~ s/\'/\\'/g;
+		push @cat_rows, "INSERT INTO eldamo.CAT (ID, LABEL, PARENT_ID) VALUES ($parentcat_uid, '$label', NULL);" ;
 		foreach my $cat ($parentcat->children('cat')){
 			$catshashbykey {$cat_uid} = $cat->att('id');
-		   push @cat_rows, "INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES ($cat_uid, '".$cat->att('label')."', $parentcat_uid);" ;
+		   $label = $cat->att('label');
+		   $label =~ s/\'/\\'/g;
+		   push @cat_rows, "INSERT INTO eldamo.CAT (ID, LABEL, PARENT_ID) VALUES ($cat_uid, '$label', $parentcat_uid);" ;
 	      print '.' if ($cat_uid % 200 == 0);
 			$cat_uid++;
 		}
@@ -389,10 +393,12 @@ sub hashforms{
    print "   => forms ";  
 	foreach my $word ($root->children('word')){ harvestforms($word); }
 	foreach my $form (sort (unique(@raw_forms))){
-		push @form_rows, "INSERT INTO eldamo.FORM (ID, TXT) VALUES ('$form_uid', '$form');";
-		$formshashbykey {$form_uid} = $form;
-	   print '.' if ($form_uid % 10000 == 0);
-		$form_uid++;
+		if ($form ne '') {
+         push @form_rows, "INSERT INTO eldamo.FORM (ID, TXT) VALUES ('$form_uid', '$form');";
+         $formshashbykey {$form_uid} = $form;
+         print '.' if ($form_uid % 10000 == 0);
+         $form_uid++;
+      }
 	}
 	undef @raw_forms; 
 	sayhashkeytovalue(\%formshashbykey, \%formshashbyvalue);
@@ -440,7 +446,7 @@ sub procrule{
 	foreach my $rule ($ruleparent->children('rule')){
 		pushform($rule->att('from'));
 		pushform($rule->att('rule'));
-		pushform($rule->att('to'));
+		#pushform($rule->att('to'));
 	}
 }
 
@@ -455,9 +461,9 @@ sub procdinges{
 		foreach my $ruleexample ($deriv->children('rule-example')){
 			pushform($ruleexample->att('from'));
 			pushform($ruleexample->att('rule'));
-			pushform($ruleexample->att('to'));
+			pushform($ruleexample->att('stage'));
 		}
-		foreach my $rulestart ($deriv->children('rule-start')){pushform($rulestart->att('to'));}
+		foreach my $rulestart ($deriv->children('rule-start')){pushform($rulestart->att('stage'));}
 	}
 	foreach my $example ($dingesparent->children('example')){pushform($example->att('v'));}
 	foreach my $element ($dingesparent->children('element')){pushform($element->att('v'));}
@@ -476,10 +482,12 @@ sub hashglosses{
    print "   => glosses ...";  
 	foreach my $word ($root->children('word')){harvestglosses($word);}
 	foreach my $gloss (sort(unique(@raw_glosses))){
-		$glosseshashbykey {$gloss_uid} = $gloss; 
-		push @gloss_rows, "INSERT INTO eldamo.GLOSS (ID, LANGUAGE_ID, TXT) VALUES ($gloss_uid, 1010, '$gloss');";
-	   print '.' if ($gloss_uid % 2000 == 0);
-		$gloss_uid++;
+		if ($gloss ne '') {
+         $glosseshashbykey {$gloss_uid} = $gloss; 
+         push @gloss_rows, "INSERT INTO eldamo.GLOSS (ID, LANGUAGE_ID, TXT) VALUES ($gloss_uid, 1010, '$gloss');";
+         print '.' if ($gloss_uid % 2000 == 0);
+         $gloss_uid++;
+		}
 	}
 	undef @raw_glosses;
 	sayhashkeytovalue(\%glosseshashbykey, \%glosseshashbyvalue);
@@ -511,12 +519,12 @@ sub parseword{
 	my $ordering = 1;
 	my $entry_form_uid = ($formshashbyvalue{$entry->att('v')} // 'X');
 	my $entry_lang_uid = ($langshashbyvalue{$entry->att('l')} // 'X');
-	my $entry_gloss_uid = ($glosseshashbyvalue{$entry->att('gloss')} // 'X');
-	my $entry_cat_uid = ($catshashbyvalue{$entry->att('cat')} // 'X');
-	my $entry_ruleform_uid = ($formshashbyvalue{$entry->att('rule')} // 'X');
-	my $entry_stemform_uid = ($formshashbyvalue{$entry->att('stem')} // 'X');
-	my $entry_fromform_uid = ($formshashbyvalue{$entry->att('from')} // 'X');
-	my $entry_orthoform_uid = ($formshashbyvalue{$entry->att('orthography')} // 'X');
+	my $entry_gloss_uid = ($glosseshashbyvalue{$entry->att('gloss')} // 'NULL');
+	my $entry_cat_uid = ($catshashbyvalue{$entry->att('cat')} // 'NULL');
+	my $entry_ruleform_uid = ($formshashbyvalue{$entry->att('rule')} // 'NULL');
+	my $entry_stemform_uid = ($formshashbyvalue{$entry->att('stem')} // 'NULL');
+	my $entry_fromform_uid = ($formshashbyvalue{$entry->att('from')} // 'NULL');
+	my $entry_orthoform_uid = ($formshashbyvalue{$entry->att('orthography')} // 'NULL');
 	my $entry_tengwar = $entry->att('tengwar') // "";
 	my $entry_mark = $entry->att('mark') // "";
 	my $entry_orderfield = $entry->att('order') // "";
@@ -610,9 +618,9 @@ sub parseword{
 # context entry_uid
 sub parserule{
 	my ($rule, $ruleorder) = @_;
-	my $rule_from_form_uid = defined $rule->att('from') ? ($formshashbyvalue{$rule->att('from')} // 'X') : 0;
-	my $rule_rule_form_uid = defined $rule->att('rule') ? ($formshashbyvalue{$rule->att('rule')} // 'X') : 0;
-	my $rule_lang_uid = defined $rule->att('l') ? ($langshashbyvalue{$rule->att('l')} // 'X') : 0;
+	my $rule_from_form_uid = ($formshashbyvalue{$rule->att('from')} // 'NULL');
+	my $rule_rule_form_uid = ($formshashbyvalue{$rule->att('rule')} // 'NULL');
+	my $rule_lang_uid = ($langshashbyvalue{$rule->att('l')} // 'NULL');
 	push @rule_rows, "INSERT INTO eldamo.RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ($rule_uid, $entry_uid, $rule_from_form_uid, $rule_rule_form_uid, $rule_lang_uid, $ruleorder);" ;
 	$rule_uid++;
 }
@@ -624,15 +632,15 @@ sub parseref{
 	my ($ref, $entrylang_uid, $entrytype_uid, $refordering) = @_;
 	no warnings 'uninitialized';
 	# $refordering is in entry context
-	my $ordering = 1;
-	my $ref_form_uid = defined $ref->att('v') ? ($formshashbyvalue{$ref->att('v')} // 'X') : 0;
-	my $ref_lang_uid = defined $ref->att('l') ? ($langshashbyvalue{$ref->att('l')} // 'X-'.$ref->att('l')) : $entrylang_uid;
-	my $ref_gloss_uid = defined $ref->att('gloss') ? ($glosseshashbyvalue{$ref->att('gloss')} // $ref->att('gloss')) : 0;
-	my $ref_rulefrom_form_uid = defined $ref->att('from') ? ($formshashbyvalue{$ref->att('from')} // 'X') : 0;
-	my $ref_rulerule_form_uid = defined $ref->att('rule') ? ($formshashbyvalue{$ref->att('rule')} // 'X') : 0;
-	my $ref_rlrule_form_uid = defined $ref->att('rl') ? ($formshashbyvalue{$ref->att('rl')} // 'X') : 0;
+	my $ordering = 1;  
+	my $ref_form_uid = ($formshashbyvalue{$ref->att('v')} // 'X');
+	my $ref_lang_uid = ($langshashbyvalue{$ref->att('l')} // 'NULL');
+	my $ref_gloss_uid = ($glosseshashbyvalue{$ref->att('gloss')} // 'NULL');
+	my $ref_rulefrom_form_uid = ($formshashbyvalue{$ref->att('from')} // 'NULL');
+	my $ref_rlrule_form_uid = ($formshashbyvalue{$ref->att('rule')} // 'NULL');
+	my $ref_rulerule_form_uid = ($formshashbyvalue{$ref->att('rl')} // 'NULL');
 	my $ref_mark = $ref->att('mark') // "";
-	my $ref_source_uid = defined $ref->att('source') ? ($sourceshashbyvalue{substr($ref->att('source'), 0, index($ref->att('source'), '/'))} // 'X') : 0;
+	my $ref_source_uid = ($sourceshashbyvalue{substr($ref->att('source'), 0, index($ref->att('source'), '/'))} // 'NULL');
 	#say encode_utf8("ref: $ref_uid v=$ref_form_uid l=$ref_lang_uid gloss=$ref_gloss_uid from=$ref_rulefrom_form_uid rule=$ref_rulerule_form_uid rl=$ref_rlrule_form_uid mark=$ref_mark source=$ref_source_uid");
 	
 	push @ref_rows, "INSERT INTO eldamo.REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID) VALUES ($ref_uid, $entry_uid, $ref_form_uid, $ref_gloss_uid, $ref_lang_uid, $ref_source_uid, '$ref_mark', $ref_rulefrom_form_uid, $ref_rlrule_form_uid, $ref_rulerule_form_uid, $ordering, $entrytype_uid);";
@@ -697,6 +705,7 @@ sub parsedoc{
 	my ($doc, $doctype) = @_;
 	my $text = $doc->text;
 	$text =~ s/\R//g;
+	$text =~ s/\'/\\'/g;
 	push @doc_rows, "INSERT INTO eldamo.DOC (ID, TXT, DOCTYPE_ID) VALUES ($doc_uid, '$text', ".($typeshashbyvalue{$doctype} // 'X').");";
 }
 
@@ -722,9 +731,9 @@ sub parselinked{
 		}
 	}
 	$ordering = 1;
-	my $linked_to_lang_uid = defined $linked->att('l') ? ($langshashbyvalue{$linked->att('l')} // 'X') : 0;
+	my $linked_to_lang_uid = defined $linked->att('l') ? ($langshashbyvalue{$linked->att('l')} // 'X') : 'NULL';
 	my $linked_mark = $linked->att('mark') // "";
-	my $linked_source_uid = defined $linked->att('source') ? ($sourceshashbyvalue{substr($linked->att('source'), 0, index($linked->att('source'), '/'))} // 'X') : 0;
+	my $linked_source_uid = defined $linked->att('source') ? ($sourceshashbyvalue{substr($linked->att('source'), 0, index($linked->att('source'), '/'))} // 'X') : 'NULL';
 	foreach my $orderexample ($linked->children('order')){
 		parseexample($orderexample, $ordering, 2);
 		$ordering++;
@@ -790,11 +799,11 @@ sub parseruleseq{
 #linked_uid; ordering in global context
 sub parseruleseqrow{
 	my ($rulerow, $ordering) = @_;
-	my $ruleseq_fromform_uid = defined $rulerow->att('from') ? ($formshashbyvalue{$rulerow->att('from')} // 'X') : 0;
-	my $ruleseq_ruleform_uid = defined $rulerow->att('rule') ? ($formshashbyvalue{$rulerow->att('rule')} // 'X') : 0;
-	my $ruleseq_toform_uid = defined $rulerow->att('to') ? ($formshashbyvalue{$rulerow->att('to')} // 'X') : 0;
-	my $ruleseq_lang_uid = defined $rulerow->att('l') ? ($langshashbyvalue{$rulerow->att('l')} // 'X') : 0;
-	push @rulesequence_rows, "INSERT INTO eldamo.RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, TO_FORM_ID, ORDERING) VALUES ($linked_uid, $ruleseq_fromform_uid, $ruleseq_lang_uid, $ruleseq_ruleform_uid, $ruleseq_toform_uid, $ordering);";
+	my $ruleseq_fromform_uid = defined $rulerow->att('from') ? ($formshashbyvalue{$rulerow->att('from')} // 'X') : 'NULL';
+	my $ruleseq_ruleform_uid = defined $rulerow->att('rule') ? ($formshashbyvalue{$rulerow->att('rule')} // 'X') : 'NULL';
+	my $ruleseq_stageform_uid = defined $rulerow->att('stage') ? ($formshashbyvalue{$rulerow->att('stage')} // 'X') : 'NULL';
+	my $ruleseq_lang_uid = defined $rulerow->att('l') ? ($langshashbyvalue{$rulerow->att('l')} // 'X') : 'NULL';
+	push @rulesequence_rows, "INSERT INTO eldamo.RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ($linked_uid, $ruleseq_fromform_uid, $ruleseq_lang_uid, $ruleseq_ruleform_uid, $ruleseq_stageform_uid, $ordering);";
 }
 
 # === UTILS =================================================
