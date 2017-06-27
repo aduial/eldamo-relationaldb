@@ -12,8 +12,10 @@ $|=1; # this is required to not have the progress dots printed all at the same t
 # 's': create SQL files; 'h': print debug hash contents to stdout
 my $mode = $ARGV[0] // 'X';
 
+# change if needed. If you enter a schema name, postfix with a period
+my $schema = "";
 #my $file = "test.xml";
-my $file = "eldamo-data.0.5.5.xml";
+my $file = "eldamo-data.0.5.6.xml";
 #my $file = "eldamo-data.xml";
 
 
@@ -181,7 +183,7 @@ sub crunchtypes{
 	my $parent_uid = defined $parentname ? $typeshashbyvalue{$parentname} : "NULL";
    foreach my $typestring (@$typearray){
       $typeshashbykey {$type_uid} = $typestring;
-	   push @type_rows, "INSERT INTO eldamo.TYPE(ID, TXT, PARENT_ID) VALUES ($type_uid, '$typestring', $parent_uid);";
+	   push @type_rows, "INSERT INTO ".$schema."TYPE(ID, TXT, PARENT_ID) VALUES ($type_uid, '$typestring', $parent_uid);";
       $type_uid++;
    }
 }
@@ -217,7 +219,7 @@ sub crunchgrammar{
 	my $grammartype_id = defined $grammartype ? $typeshashbyvalue{$grammartype} : "NULL";
    foreach my $grammarstring (@$grammararray){
       $grammarshashbykey {$grammar_uid} = $grammarstring;
-	   push @grammar_rows, "INSERT INTO eldamo.GRAMMAR(ID, TXT, GRAMMARTYPE_ID) VALUES ($grammar_uid, '$grammarstring', $grammartype_id);";
+	   push @grammar_rows, "INSERT INTO ".$schema."GRAMMAR(ID, TXT, GRAMMARTYPE_ID) VALUES ($grammar_uid, '$grammarstring', $grammartype_id);";
       $grammar_uid++;
    }
 }
@@ -266,26 +268,47 @@ sub hashlangs{
 	foreach my $otherlang (unique @otherlangs){
 	   if (!exists($langshashbyvalue{$otherlang})) {
 				$langshashbyvalue{$otherlang} = $lang_uid;
-					push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '$otherlang', '$otherlang', NULL);" ;
+					push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '$otherlang', '$otherlang', NULL);" ;
 				$lang_uid++;  
 		}
 	}
 	print '.';
-	push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1000, 'Modern languages', 'ML', NULL);" ;
-	push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1010, 'English', 'ENG', 1000);" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1000, 'Modern languages', 'ML', NULL);" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1010, 'English', 'ENG', 1000);" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1011, 'Čeština (Czech)', 'CZE', 1000);";
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1012, 'Dansk (Danish)', 'DAN', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1013, 'Deutsch (German)', 'GER', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1014, 'Nederlands (Dutch)', 'DUT', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1015, 'Français (French)', 'FRA', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1016, 'Italiano (Italian)', 'ITA', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1017, 'Norsk (Norwegian)', 'NOR', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1018, 'Nynorsk (Nynorsk Norwegian)', 'NNO', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1019, 'Bokmal (Bokmal Norwegian)', 'NOB', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1020, 'Polskie (Polish)', 'POL', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1021, 'Português (Portuguese)', 'POR', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1022, 'Română (Romanian)', 'RUM', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1023, 'Русский (Russian)', 'RUS', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1024, 'Slovenský (Slovak)', 'SLO', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1025, 'Slovenščina (Slovenian)', 'SLV', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1026, 'Español (Spanish)', 'SPA', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1027, 'Српски (Serbian)', 'SRP', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1028, 'Swedish (Svenska)', 'SWE', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1029, 'Türk (Turkish)', 'TUR', 1000);" ;
+   push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1030, 'Cymraeg (Welsh)', 'WEL', 1000);" ;
 	sayhash(\%langshashbykey) if $mode eq "-h";
-	writesql(\@lang_rows, 'lang.sql') if $mode eq "-s";  # table LANGUAGE
+	writesql_no_encode(\@lang_rows, 'lang.sql') if $mode eq "-s";  # table LANGUAGE
 	writesql(\@langdoc_rows, 'lang_doc.sql') if $mode eq "-s";  # table LANGUAGE_DOC & DOC
 	undef %langshashbykey;
    undef @lang_rows;
 	say " done.";
 }
 
+
 sub harvestlangs{
 	my ($lang, $parent_uid) = @_;
 	foreach my $langdoctype (@langdocs){crunchlangdocs($lang, $langdoctype);} # see above
 	$langshashbykey {$lang_uid} = $lang->att('id') if (defined $lang->att('id'));
-	push @lang_rows, "INSERT INTO eldamo.LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '".(defined $lang->att('name') ? $lang->att('name') : "NULL")."', ".(defined $lang->att('id') ? "'".$lang->att('id')."'" : "NULL").", ".(defined $parent_uid ? $parent_uid : "NULL").");" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ($lang_uid, '".(defined $lang->att('name') ? $lang->att('name') : "NULL")."', ".(defined $lang->att('id') ? "'".$lang->att('id')."'" : "NULL").", ".(defined $parent_uid ? $parent_uid : "NULL").");" ;
 	
 	$parent_uid = $lang_uid;
 	$lang_uid++;
@@ -305,7 +328,7 @@ sub crunchlangdocs{
 sub parselangdoc{
 	my ($doc, $langdoctype, $ordering) = @_;
 	parsedoc($doc, $langdoctype); # <- doc_uid gets set here
-	push @langdoc_rows, "INSERT INTO eldamo.LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ($lang_uid, $doc_uid, $ordering);";
+	push @langdoc_rows, "INSERT INTO ".$schema."LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ($lang_uid, $doc_uid, $ordering);";
 }
 
 sub harvestotherlangs{
@@ -332,13 +355,13 @@ sub harvestcats{
 	foreach my $parentcat ($cats->children('cat-group')){
 		$catshashbykey {$parentcat_uid} = $parentcat->att('id');
 		$label = $parentcat->att('label');
-		$label =~ s/\'/\\'/g;
-		push @cat_rows, "INSERT INTO eldamo.CAT (ID, LABEL, PARENT_ID) VALUES ($parentcat_uid, '$label', NULL);" ;
+		$label =~ s/\'/''/g;
+		push @cat_rows, "INSERT INTO ".$schema."CAT (ID, LABEL, PARENT_ID) VALUES ($parentcat_uid, '$label', NULL);" ;
 		foreach my $cat ($parentcat->children('cat')){
 			$catshashbykey {$cat_uid} = $cat->att('id');
 		   $label = $cat->att('label');
-		   $label =~ s/\'/\\'/g;
-		   push @cat_rows, "INSERT INTO eldamo.CAT (ID, LABEL, PARENT_ID) VALUES ($cat_uid, '$label', $parentcat_uid);" ;
+		   $label =~ s/\'/''/g;
+		   push @cat_rows, "INSERT INTO ".$schema."CAT (ID, LABEL, PARENT_ID) VALUES ($cat_uid, '$label', $parentcat_uid);" ;
 	      print '.' if ($cat_uid % 200 == 0);
 			$cat_uid++;
 		}
@@ -364,7 +387,7 @@ sub harvestsources{
 	my ($source) = @_;
 	my $ordering = 1;
 	$sourceshashbykey {$source_uid} = $source->att('prefix');
-	push @source_rows, "INSERT INTO eldamo.SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ($source_uid, '".$source->att('name')."', '".$source->att('prefix')."', ".(defined $source->att('type') ? $typeshashbyvalue{$source->att('type')} : "NULL").");" ;
+	push @source_rows, "INSERT INTO ".$schema."SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ($source_uid, '".$source->att('name')."', '".$source->att('prefix')."', ".(defined $source->att('type') ? $typeshashbyvalue{$source->att('type')} : "NULL").");" ;
 	foreach my $note ($source->children('notes')){
 		parsesourcedoc($note, 'notes', $ordering);
 		$ordering++;
@@ -384,7 +407,7 @@ sub parsesourcedoc{
 	no warnings 'uninitialized';
 	my ($doc, $sourcedoctype, $ordering) = @_; # sourcedoctype = notes or cite
 	parsedoc($doc, $sourcedoctype); # always call parsedoc first to set uid 
-	push  @srcdoc_rows, "INSERT INTO eldamo.SOURCE_DOC(SOURCE_ID, DOC_ID, ORDERING) VALUES ($source_uid, $doc_uid, $ordering);";
+	push  @srcdoc_rows, "INSERT INTO ".$schema."SOURCE_DOC(SOURCE_ID, DOC_ID, ORDERING) VALUES ($source_uid, $doc_uid, $ordering);";
 }
 
 # === FORM =============================================
@@ -394,7 +417,7 @@ sub hashforms{
 	foreach my $word ($root->children('word')){ harvestforms($word); }
 	foreach my $form (sort (unique(@raw_forms))){
 		if ($form ne '') {
-         push @form_rows, "INSERT INTO eldamo.FORM (ID, TXT) VALUES ('$form_uid', '$form');";
+         push @form_rows, "INSERT INTO ".$schema."FORM (ID, TXT) VALUES ('$form_uid', '$form');";
          $formshashbykey {$form_uid} = $form;
          print '.' if ($form_uid % 10000 == 0);
          $form_uid++;
@@ -484,7 +507,7 @@ sub hashglosses{
 	foreach my $gloss (sort(unique(@raw_glosses))){
 		if ($gloss ne '') {
          $glosseshashbykey {$gloss_uid} = $gloss; 
-         push @gloss_rows, "INSERT INTO eldamo.GLOSS (ID, LANGUAGE_ID, TXT) VALUES ($gloss_uid, 1010, '$gloss');";
+         push @gloss_rows, "INSERT INTO ".$schema."GLOSS (ID, LANGUAGE_ID, TXT) VALUES ($gloss_uid, 1010, '$gloss');";
          print '.' if ($gloss_uid % 2000 == 0);
          $gloss_uid++;
 		}
@@ -531,12 +554,12 @@ sub parseword{
 	my $entry_eldamopageid = $entry->att('page-id') // "";
 	my $entrytype_uid = entrytype($entry->att('speech') // 'unknown');
 	$parent_uid = $parent_uid // 'NULL';
-	push @entry_rows, "INSERT INTO eldamo.ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, CAT_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_cat_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid);";
+	push @entry_rows, "INSERT INTO ".$schema."ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, CAT_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_cat_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid);";
 	
 	$ordering = 1;
 	foreach my $speeches ($entry->children('speech')){
 	   foreach my $speech (split(' ', $speeches)){ 
-         push @linkedgrammar_rows, "INSERT INTO eldamo.LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDENING) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering);"; 
+         push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDENING) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering);"; 
          $ordering++;
 		}
 	}
@@ -621,7 +644,7 @@ sub parserule{
 	my $rule_from_form_uid = ($formshashbyvalue{$rule->att('from')} // 'NULL');
 	my $rule_rule_form_uid = ($formshashbyvalue{$rule->att('rule')} // 'NULL');
 	my $rule_lang_uid = ($langshashbyvalue{$rule->att('l')} // 'NULL');
-	push @rule_rows, "INSERT INTO eldamo.RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ($rule_uid, $entry_uid, $rule_from_form_uid, $rule_rule_form_uid, $rule_lang_uid, $ruleorder);" ;
+	push @rule_rows, "INSERT INTO ".$schema."RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ($rule_uid, $entry_uid, $rule_from_form_uid, $rule_rule_form_uid, $rule_lang_uid, $ruleorder);" ;
 	$rule_uid++;
 }
 
@@ -643,7 +666,7 @@ sub parseref{
 	my $ref_source_uid = ($sourceshashbyvalue{substr($ref->att('source'), 0, index($ref->att('source'), '/'))} // 'NULL');
 	#say encode_utf8("ref: $ref_uid v=$ref_form_uid l=$ref_lang_uid gloss=$ref_gloss_uid from=$ref_rulefrom_form_uid rule=$ref_rulerule_form_uid rl=$ref_rlrule_form_uid mark=$ref_mark source=$ref_source_uid");
 	
-	push @ref_rows, "INSERT INTO eldamo.REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID) VALUES ($ref_uid, $entry_uid, $ref_form_uid, $ref_gloss_uid, $ref_lang_uid, $ref_source_uid, '$ref_mark', $ref_rulefrom_form_uid, $ref_rlrule_form_uid, $ref_rulerule_form_uid, $ordering, $entrytype_uid);";
+	push @ref_rows, "INSERT INTO ".$schema."REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID) VALUES ($ref_uid, $entry_uid, $ref_form_uid, $ref_gloss_uid, $ref_lang_uid, $ref_source_uid, '$ref_mark', $ref_rulefrom_form_uid, $ref_rlrule_form_uid, $ref_rulerule_form_uid, $ordering, $entrytype_uid);";
 	
 	foreach my $change ($ref->children('change')){
 		parselinked($change, $ordering, 1, 'change'); # ref_uid + i1 + source + change_v
@@ -695,7 +718,7 @@ sub parseentrydoc{
 	my ($note, $ordering) = @_;
 	# type note, 
 	parsedoc($note, 'notes'); #first call this to set doc_uid
-	push @entrydoc_rows, encode_utf8("INSERT INTO eldamo.ENTRY_DOC(ENTRY_ID, DOC_ID, ORDERING) VALUES ($entry_uid, $doc_uid, $ordering);");
+	push @entrydoc_rows, "INSERT INTO ".$schema."ENTRY_DOC(ENTRY_ID, DOC_ID, ORDERING) VALUES ($entry_uid, $doc_uid, $ordering);";
 }
 
 # === DOC =================================================
@@ -705,8 +728,8 @@ sub parsedoc{
 	my ($doc, $doctype) = @_;
 	my $text = $doc->text;
 	$text =~ s/\R//g;
-	$text =~ s/\'/\\'/g;
-	push @doc_rows, "INSERT INTO eldamo.DOC (ID, TXT, DOCTYPE_ID) VALUES ($doc_uid, '$text', ".($typeshashbyvalue{$doctype} // 'X').");";
+	$text =~ s/\'/''/g;
+	push @doc_rows, "INSERT INTO ".$schema."DOC (ID, TXT, DOCTYPE_ID) VALUES ($doc_uid, '$text', ".($typeshashbyvalue{$doctype} // 'X').");";
 }
 
 # === LINKED =================================================
@@ -719,14 +742,14 @@ sub parselinked{
 	my $ordering = 1; 
 	if (defined $linked->att('form')){
 		foreach my $form (split(' ', $linked->att('form'))){	
-			push @linkedgrammar_rows, "INSERT INTO eldamo.LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $ordering);";
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $ordering);";
 			$ordering++;
 		}
 	}
 	$ordering = 1;
 	if (defined $linked->att('variant')){
 		foreach my $variant (split(' ', $linked->att('variant'))){	
-			push @linkedgrammar_rows, "INSERT INTO eldamo.LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $ordering);";
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $ordering);";
 			$ordering++;
 		}
 	}
@@ -748,9 +771,9 @@ sub parselinked{
 		parseruleseq($linked);
 	}
 	if ($isref == 1){
-		push @linked_rows, "INSERT INTO eldamo.LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');"; 
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');"; 
 	} else {
-		push @linked_rows, "INSERT INTO eldamo.LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');";
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');";
 	}
 	$linked_uid++;
 }
@@ -766,9 +789,9 @@ sub parseexample{
 	my $example_source_uid = defined $example->att('source') ? ($sourceshashbyvalue{substr($example->att('source'), 0, index($example->att('source'), '/'))} // 'X') : 0;
 	
 	if ($type == 2){
-	   push @example_rows, "INSERT INTO eldamo.EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($linked_uid, $example_source_uid, $example_form_uid, $ordering, ".($typeshashbyvalue{'orderexample'} // 'X').");";
+	   push @example_rows, "INSERT INTO ".$schema."EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($linked_uid, $example_source_uid, $example_form_uid, $ordering, ".($typeshashbyvalue{'orderexample'} // 'X').");";
 	} else {
-		push @example_rows, "INSERT INTO eldamo.EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($ref_uid, $example_source_uid, $example_form_uid, $ordering, ".(($typeshashbyvalue{$example->att('t').'example'} // $typeshashbyvalue{'refexample'}) // 'X').");";
+		push @example_rows, "INSERT INTO ".$schema."EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($ref_uid, $example_source_uid, $example_form_uid, $ordering, ".(($typeshashbyvalue{$example->att('t').'example'} // $typeshashbyvalue{'refexample'}) // 'X').");";
 	}
 	$example_uid++;
 }
@@ -778,7 +801,7 @@ sub parseexample{
 #linked_uid in global context
 sub parselinkedform{
 	my ($linkedform, $ordering) = @_;
-	push @linkedform_rows, "INSERT INTO eldamo.LINKED_FORM(LINKED_ID, FORM_ID, ORDERING) VALUES ($linked_uid, ".($formshashbyvalue{$linkedform} // 'X').", $ordering);";
+	push @linkedform_rows, "INSERT INTO ".$schema."LINKED_FORM(LINKED_ID, FORM_ID, ORDERING) VALUES ($linked_uid, ".($formshashbyvalue{$linkedform} // 'X').", $ordering);";
 }
 
 # === RULE_SEQUENCE =================================================
@@ -803,7 +826,7 @@ sub parseruleseqrow{
 	my $ruleseq_ruleform_uid = defined $rulerow->att('rule') ? ($formshashbyvalue{$rulerow->att('rule')} // 'X') : 'NULL';
 	my $ruleseq_stageform_uid = defined $rulerow->att('stage') ? ($formshashbyvalue{$rulerow->att('stage')} // 'X') : 'NULL';
 	my $ruleseq_lang_uid = defined $rulerow->att('l') ? ($langshashbyvalue{$rulerow->att('l')} // 'X') : 'NULL';
-	push @rulesequence_rows, "INSERT INTO eldamo.RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ($linked_uid, $ruleseq_fromform_uid, $ruleseq_lang_uid, $ruleseq_ruleform_uid, $ruleseq_stageform_uid, $ordering);";
+	push @rulesequence_rows, "INSERT INTO ".$schema."RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ($linked_uid, $ruleseq_fromform_uid, $ruleseq_lang_uid, $ruleseq_ruleform_uid, $ruleseq_stageform_uid, $ordering);";
 }
 
 # === UTILS =================================================
@@ -840,6 +863,15 @@ sub writesql{
    foreach my $arrayrow (@$arrayed){ say SQLFILE encode_utf8($arrayrow); }
 	close SQLFILE;
 }
+
+sub writesql_no_encode{	
+	my $arrayed = $_[0];
+	my $filename = $_[1];
+   open (SQLFILE, ">", $outputdir.$filename) or die "$! error trying to create or overwrite $SQLFILE";
+   foreach my $arrayrow (@$arrayed){ say SQLFILE $arrayrow; }
+	close SQLFILE;
+}
+
 
 # === FINALLY =================================================
 
