@@ -1,16 +1,19 @@
 # eldamo-relationaldb
 
-# update for version 0.2.1
-This release is compatible with eldamo v. 0.5.5
+# update for version 0.2.2
+This release is compatible with eldamo v. 0.5.6
 
 Description of the files:
 
-- eldamo-diagram.png: an updated diagram of version 0.2.1 the database table structure 
-- changed from 0.2: changed the name of the 'to-form_id' column in RULESEQUENCE to 
-stage_form_id'
-- eldamo.pl: the Perl script used to parse the eldamo.xml data with. This script is much better than the previous one; it will parse the XML file and can write all SQL data scripts in one pass.
-The XML filename is still hard-coded in the script but can be easily changed. The script uses, and if necessary, creates a directory called 'output' in the current directory and will write the SQL files in there. If the directory and files already exist they will be overwritten. 
-### - NOTE If you want to run this script on a newly downloaded eldamo data xml file you will have to manually carry out one small edit: `<language-cat ... > ... </language-cat>` in the XML needs to be changed into `<language ...> ... </language>`
+- *eldamo-0.5.6.sqlite:* SQLite database containing Eldamo v0.5.6 
+- *ddl-sqlite/eldamo-struct-sqlite.sql:* DDL file to generate the database structure with (SQLite dialect)
+- *eldamo-mysql-erd.png:* (deprecated) ERD diagram of version 0.2.1 of the MYSQL database (Eldamo v0.5.5)
+- *eldamo-sqlite-erd.png:* updated ERD diagram of the SQLite version of the database
+- *table-data-sqlite_eldamo-0.5.6.zip:* zipped output of the eldamo.pl script for Eldamo v.0.5.6
+- *eldamo.pl:* the Perl script used to parse the eldamo.xml data with. It will parse the XML file and can write all SQL table data scripts in one pass.
+The XML filename is still hard-coded in the script but can be easily changed (`my $file`). By default it does not prefix the table names with the schema name, but that can also be set in the script (`my $schema`)
+The script uses, and if necessary, creates a directory called 'output' in the current directory and will write the SQL files in there. If the directory and files already exist they will be overwritten. 
+### - NOTE If you want to run this script on the eldamo data xml downloaded from eldamo.org, you will have to manually carry out one small edit: `<language-cat ... > ... </language-cat>` in the XML needs to be changed into `<language ...> ... </language>`
 - usage: `eldamo.pl [ -s | -h ]`
 - - the -s switch will create SQL output 
 - - the -h switch will generate some debug info in SDOUT
