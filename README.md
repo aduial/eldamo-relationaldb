@@ -26,8 +26,6 @@ The script uses, and if necessary, creates a directory called 'output' in the cu
 >     feature 'say'
 >     File::Path qw(make_path)
 
-- the sql (directory) contains zipped files containing the database structure, data, and both
-
 #background
 
 The intention of this project is to create a dictionary of the languages described by JRR Tolkien. 
