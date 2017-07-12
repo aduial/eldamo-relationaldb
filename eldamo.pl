@@ -15,8 +15,9 @@ my $mode = $ARGV[0] // 'X';
 # change if needed. If you enter a schema name, postfix with a period
 my $schema = "";
 #my $file = "test.xml";
-my $file = "eldamo-data.0.5.6.xml";
+my $file = "eldamo-data.0.5.6.1.xml";
 #my $file = "eldamo-data.xml";
+my $outputdir = 'output/';
 
 
 my $twig = XML::Twig->new();
@@ -90,7 +91,6 @@ my %glosseshashbyvalue;
 my $counter = 0;
 
 # create files and dir if needed
-my $outputdir = 'output/';
 my $SQLFILE;
 eval { make_path($outputdir) };
 if ($@) {
@@ -296,8 +296,8 @@ sub hashlangs{
    push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1029, 'Türk (Turkish)', 'TUR', 1000);" ;
    push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1030, 'Cymraeg (Welsh)', 'WEL', 1000);" ;
 	sayhash(\%langshashbykey) if $mode eq "-h";
-	writesql_no_encode(\@lang_rows, 'lang.sql') if $mode eq "-s";  # table LANGUAGE
-	writesql(\@langdoc_rows, 'lang_doc.sql') if $mode eq "-s";  # table LANGUAGE_DOC & DOC
+	writesql_no_encode(\@lang_rows, 'language.sql') if $mode eq "-s";  # table LANGUAGE
+	writesql(\@langdoc_rows, 'language_doc.sql') if $mode eq "-s";  # table LANGUAGE_DOC & DOC
 	undef %langshashbykey;
    undef @lang_rows;
 	say " done.";
