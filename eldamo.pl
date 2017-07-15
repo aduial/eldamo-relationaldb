@@ -62,11 +62,7 @@ my @example_rows = ();
 my @raw_forms = ();
 my @raw_glosses = ();
 my @raw_sourcetypes = ();
-my @raw_speechforms = ();
-my @raw_inflectforms = ();
-my @raw_inflectvariants = ();
-my @raw_classforms = ();
-my @raw_classvariants = ();
+my @raw_grammarforms = ();
 
 
 my %entrieshashbykey;
@@ -197,16 +193,8 @@ sub hashgrammar{
    print "   => grammar ";  
    foreach my $word ($root->children('word')) { harvestgrammar($word);}
    # - this has to change, use grammar, not linked
-	crunchgrammar([sort (unique(@raw_speechforms))], 'speechform');  # speech = entry type
-	crunchgrammar([sort (unique(@raw_inflectforms))], 'inflectform'); 
-	crunchgrammar([sort (unique(@raw_inflectvariants))], 'inflectvariant'); 
-	crunchgrammar([sort (unique(@raw_classforms))], 'classform');     
-	crunchgrammar([sort (unique(@raw_classvariants))], 'classvariant');     
-	undef @raw_speechforms;
-	undef @raw_inflectforms;
-	undef @raw_inflectvariants;
-	undef @raw_classforms;
-	undef @raw_classvariants;
+	crunchgrammar([sort (unique(@raw_grammarforms))]); 
+	undef @raw_grammarforms;
    sayhashkeytovalue(\%grammarshashbykey, \%grammarshashbyvalue);
 	writesql(\@grammar_rows, 'grammar.sql') if $mode eq "-s";  # table GRAMMAR
 	undef %grammarshashbykey;
@@ -215,11 +203,10 @@ sub hashgrammar{
 }
 
 sub crunchgrammar{
-	my ($grammararray, $grammartype) = @_;
-	my $grammartype_id = defined $grammartype ? $typeshashbyvalue{$grammartype} : "NULL";
+	my ($grammararray) = @_;
    foreach my $grammarstring (@$grammararray){
       $grammarshashbykey {$grammar_uid} = $grammarstring;
-	   push @grammar_rows, "INSERT INTO ".$schema."GRAMMAR(ID, TXT, GRAMMARTYPE_ID) VALUES ($grammar_uid, '$grammarstring', $grammartype_id);";
+	   push @grammar_rows, "INSERT INTO ".$schema."GRAMMAR(ID, TXT) VALUES ($grammar_uid, '$grammarstring');";
       $grammar_uid++;
    }
 }
@@ -228,17 +215,21 @@ sub harvestgrammar{
 	my ($entry) = @_;
 	print '.' if ($counter % 1500 == 0);
 	$counter++;
-   blobl(\@raw_speechforms, $entry->att('speech')) if defined $entry->att('speech');
-   commoninflects($entry);
-   foreach my $ref ($entry->children('ref')){ commoninflects($ref); }
+	# speech
+   blobl(\@raw_grammarforms, $entry->att('speech')) if defined $entry->att('speech');
+   # inflects & elements for entry
+   inflectsandelements($entry);
+   # inflects & elements for ref
+   foreach my $ref ($entry->children('ref')){ inflectsandelements($ref); }
+   # class form & variant for entry
    foreach my $class ($entry->children('class')){
-      blobl(\@raw_classforms, $class->att('form')) if defined $class->att('form');
-      blobl(\@raw_classvariants, $class->att('variant')) if defined $class->att('variant');
+      blobl(\@raw_grammarforms, $class->att('form')) if defined $class->att('form');
+      blobl(\@raw_grammarforms, $class->att('variant')) if defined $class->att('variant');
    }
    foreach my $child ($entry->children('word')){ harvestgrammar($child); }
 }
 
-sub commoninflects{
+sub inflectsandelements{
 	my ($element) = @_;
    foreach my $inflect ($element->children('inflect')){ subinflects($inflect); }
    foreach my $element ($element->children('element')){ subinflects($element); }
@@ -246,8 +237,8 @@ sub commoninflects{
 
 sub subinflects{
 	my ($subelement) = @_;
-   blobl(\@raw_inflectforms, $subelement->att('form')) if defined $subelement->att('form');
-   blobl(\@raw_inflectvariants, $subelement->att('variant')) if defined $subelement->att('variant');
+   blobl(\@raw_grammarforms, $subelement->att('form')) if defined $subelement->att('form');
+   blobl(\@raw_grammarforms, $subelement->att('variant')) if defined $subelement->att('variant');
 }
 
 sub blobl{
@@ -559,7 +550,7 @@ sub parseword{
 	$ordering = 1;
 	foreach my $speeches ($entry->children('speech')){
 	   foreach my $speech (split(' ', $speeches)){ 
-         push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDENING) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering);"; 
+         push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDENING, GRAMMARTYPE_ID) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering, ".($typeshashbyvalue{'speechform'} // 'X').");"; 
          $ordering++;
 		}
 	}
@@ -704,7 +695,7 @@ sub parseref{
 	}
 	$ordering = 1;
 	foreach my $related ($ref->children('related')){
-		parselinked($related, $ordering, 0, 'related'); # ref_uid + v + source + mark
+		parselinked($related, $ordering, 1, 'related'); # ref_uid + v + source + mark
 		$ordering++;
 	}
 	$ref_uid++;
@@ -739,29 +730,30 @@ sub parselinked{
 	no warnings 'uninitialized';
 	my ($linked, $linkedordering, $isref, $linkedtype) = @_;
 	#take ref_uid ONLY if $isref = 1; 
-	my $ordering = 1; 
+	my $form_grammartype_id = $linkedtype eq 'class' ? $typeshashbyvalue{'classform'} : $typeshashbyvalue{'inflectform'};
+	my $variant_grammartype_id = $linkedtype eq 'class' ? $typeshashbyvalue{'classvariant'} : $typeshashbyvalue{'inflectvariant'};
+	my $lg_ordering = 1; 
 	if (defined $linked->att('form')){
 		foreach my $form (split(' ', $linked->att('form'))){	
-			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $ordering);";
-			$ordering++;
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $lg_ordering, $form_grammartype_id);";
+			$lg_ordering++;
 		}
 	}
-	$ordering = 1;
+	$lg_ordering = 1;
 	if (defined $linked->att('variant')){
 		foreach my $variant (split(' ', $linked->att('variant'))){	
-			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $ordering);";
-			$ordering++;
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $lg_ordering, $variant_grammartype_id);";
+			$lg_ordering++;
 		}
 	}
-	$ordering = 1;
 	my $linked_to_lang_uid = defined $linked->att('l') ? ($langshashbyvalue{$linked->att('l')} // 'X') : 'NULL';
 	my $linked_mark = $linked->att('mark') // "";
 	my $linked_source_uid = defined $linked->att('source') ? ($sourceshashbyvalue{substr($linked->att('source'), 0, index($linked->att('source'), '/'))} // 'X') : 'NULL';
+	my $ordex_ordering = 1;
 	foreach my $orderexample ($linked->children('order')){
-		parseexample($orderexample, $ordering, 2);
-		$ordering++;
+		parseexample($orderexample, $ordex_ordering, 2);
+		$ordex_ordering++;
 	}
-	$ordering = 1;
 	
 	parselinkedform($linked->att('v'), 1) if (defined $linked->att('v'));
 	parselinkedform($linked->att('i1'), 2) if (defined $linked->att('i1'));
@@ -771,9 +763,9 @@ sub parselinked{
 		parseruleseq($linked);
 	}
 	if ($isref == 1){
-		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');"; 
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark');"; 
 	} else {
-		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $ordering, $linked_source_uid, '$linked_mark');";
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark');";
 	}
 	$linked_uid++;
 }
