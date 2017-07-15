@@ -1,15 +1,15 @@
 # eldamo-relationaldb
 
-# update for version 0.2.2
-This release is compatible with eldamo v. 0.5.6
+# update for version 0.2.5
+This release is compatible with eldamo v. 0.5.6.1
 
 Description of the files:
 
-- *eldamo-0.5.6.sqlite:* SQLite database containing Eldamo v0.5.6 
+- *eldamo-0.5.6.1.sqlite:* SQLite database containing Eldamo v0.5.6.1 
 - *ddl-sqlite/eldamo-struct-sqlite.sql:* DDL file to generate the database structure with (SQLite dialect)
 - *eldamo-mysql-erd.png:* (deprecated) ERD diagram of version 0.2.1 of the MYSQL database (Eldamo v0.5.5)
 - *eldamo-sqlite-erd.png:* updated ERD diagram of the SQLite version of the database
-- *table-data-sqlite_eldamo-0.5.6.zip:* zipped output of the eldamo.pl script for Eldamo v.0.5.6
+- *table-data-sqlite_eldamo-0.5.6.1.zip:* zipped output of the eldamo.pl script for Eldamo v.0.5.6.1
 - *eldamo.pl:* the Perl script used to parse the eldamo.xml data with. It will parse the XML file and can write all SQL table data scripts in one pass.
 The XML filename is still hard-coded in the script but can be easily changed (`my $file`). By default it does not prefix the table names with the schema name, but that can also be set in the script (`my $schema`)
 The script uses, and if necessary, creates a directory called 'output' in the current directory and will write the SQL files in there. If the directory and files already exist they will be overwritten. 
@@ -41,17 +41,10 @@ Local clients can add their own (reconstructed) vocabulary if they want, but tho
 
 We wanted this dictionary to be as thorough and complete as possible while also offering the flexibility for the user to add their own (reconstructed) entries on their local copy of the data set (*note that this not the same as adding new content to the database!*)
 
-In a next stage we will focus on building a client application (possibly using Python and Kivy (1)) that uses this database, although anyone is of course free to build their own web-based, desktop or mobile application as a front-end. 
+In a next stage we will focus on building a client application that uses this database, although anyone is of course free to build their own web-based, desktop or mobile application as a front-end. 
 Of course, there will also be the possibility to enter or edit the central database. Supposedly we could use the same functionality for *editing the global database* as for *local edits*, where the first would require some kind of authorisation step to prevent vandalism :) But all this is still being discussed anyhow. 
 
 As starting point we decided to 'fork' Paul Strack's phenomenal effort, the Eldamo project @ https://github.com/pfstrack/eldamo by translating his XML-based data model to a relational model. The model of this first commit allows all the data also found in Eldamo.xml, with the exception of the inflection table elements. 
 In this initial commit are included:
 
-
-
-
-- - - - - - - - - -
-(1) Kivy is a cross-platform GUI library for Python applications https://kivy.org/#home so: build once & deploy on Linux, Windows, Mac OS, Android and iOS (2)
-
-(2) OTOH: it turns out that it's much easier to create and deploy cross-platform Java GUI applications than it used to be when I last looked into it, for instance with *Codename One* (https://en.wikipedia.org/wiki/Codename_One). If that works well it could be a huge timesaver if you happen to be familiar with Java (like myself).
 
