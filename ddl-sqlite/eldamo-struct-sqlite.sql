@@ -5,6 +5,7 @@ CREATE TABLE CAT (
     PRIMARY KEY (ID),
     FOREIGN KEY (PARENT_ID) REFERENCES CAT (ID)
 );
+
 CREATE TABLE DOC (
     ID integer NOT NULL,
     TXT varchar(4000) NOT NULL,
@@ -12,6 +13,7 @@ CREATE TABLE DOC (
     PRIMARY KEY (ID),
     FOREIGN KEY (DOCTYPE_ID) REFERENCES TYPE (ID)
 );
+
 CREATE TABLE ENTRY (
     ID integer NOT NULL,
     FORM_ID integer NOT NULL,
@@ -39,6 +41,8 @@ CREATE TABLE ENTRY (
     FOREIGN KEY (ENTRYTYPE_ID) REFERENCES TYPE (ID),
     FOREIGN KEY (CAT_ID) REFERENCES CAT (ID)
 );
+
+
 CREATE TABLE ENTRY_DOC (
     ENTRY_ID integer NOT NULL,
     DOC_ID integer NOT NULL,
@@ -46,6 +50,7 @@ CREATE TABLE ENTRY_DOC (
     FOREIGN KEY (DOC_ID) REFERENCES DOC (ID),
     FOREIGN KEY (ENTRY_ID) REFERENCES ENTRY (ID)
 );
+
 CREATE TABLE EXAMPLE (
     LINKED_ID integer,
     REF_ID integer,
@@ -59,11 +64,13 @@ CREATE TABLE EXAMPLE (
     FOREIGN KEY (REF_ID) REFERENCES REF (ID),
     FOREIGN KEY (LINKED_ID) REFERENCES LINKED (ID)
 );
+
 CREATE TABLE FORM (
     ID integer NOT NULL,
     TXT varchar(255) NOT NULL, NORMALTXT VARCHAR(255),
     PRIMARY KEY (ID)
 );
+
 CREATE TABLE GLOSS (
     ID integer NOT NULL,
     LANGUAGE_ID integer NOT NULL,
@@ -71,6 +78,7 @@ CREATE TABLE GLOSS (
     PRIMARY KEY (ID),
     FOREIGN KEY (LANGUAGE_ID) REFERENCES LANGUAGE (ID)
 );
+
 CREATE TABLE LANGUAGE (
     ID integer NOT NULL,
     NAME varchar(255) NOT NULL,
@@ -79,6 +87,7 @@ CREATE TABLE LANGUAGE (
     PRIMARY KEY (ID),
     FOREIGN KEY (PARENT_ID) REFERENCES LANGUAGE (ID)
 );
+
 CREATE TABLE LANGUAGE_DOC (
     LANGUAGE_ID integer NOT NULL,
     DOC_ID integer NOT NULL,
@@ -87,6 +96,7 @@ CREATE TABLE LANGUAGE_DOC (
     FOREIGN KEY (LANGUAGE_ID) REFERENCES LANGUAGE (ID),
     FOREIGN KEY (DOC_ID) REFERENCES DOC (ID)
 );
+
 CREATE TABLE LINKED (
     ID integer NOT NULL,
     LINKEDTYPE_ID integer NOT NULL,
@@ -105,6 +115,7 @@ CREATE TABLE LINKED (
     FOREIGN KEY (REF_ID) REFERENCES REF (ID),
     FOREIGN KEY (LINKEDTYPE_ID) REFERENCES TYPE (ID)
 );
+
 CREATE TABLE LINKED_FORM (
     LINKED_ID integer NOT NULL,
     FORM_ID integer NOT NULL,
@@ -112,6 +123,7 @@ CREATE TABLE LINKED_FORM (
     FOREIGN KEY (FORM_ID) REFERENCES FORM (ID),
     FOREIGN KEY (LINKED_ID) REFERENCES LINKED (ID)
 );
+
 CREATE TABLE REF (
     ID integer NOT NULL,
     ENTRY_ID integer,
@@ -135,6 +147,7 @@ CREATE TABLE REF (
     FOREIGN KEY (ENTRYTYPE_ID) REFERENCES TYPE (ID),
     FOREIGN KEY (ENTRY_ID) REFERENCES ENTRY (ID)
 );
+
 CREATE TABLE RULE (
     ID integer NOT NULL,
     ENTRY_ID integer NOT NULL,
@@ -148,6 +161,7 @@ CREATE TABLE RULE (
     FOREIGN KEY (LANGUAGE_ID) REFERENCES LANGUAGE (ID),
     FOREIGN KEY (ENTRY_ID) REFERENCES ENTRY (ID)
 );
+
 CREATE TABLE RULESEQUENCE (
     DERIV_ID integer NOT NULL,
     FROM_FORM_ID integer,
@@ -163,6 +177,7 @@ CREATE TABLE RULESEQUENCE (
     FOREIGN KEY (FROM_FORM_ID) REFERENCES FORM (ID),
     FOREIGN KEY (LANGUAGE_ID) REFERENCES LANGUAGE (ID)
 );
+
 CREATE TABLE SOURCE (
     ID integer NOT NULL,
     NAME varchar(255),
@@ -171,6 +186,7 @@ CREATE TABLE SOURCE (
     PRIMARY KEY (ID),
     FOREIGN KEY (SOURCETYPE_ID) REFERENCES TYPE (ID)
 );
+
 CREATE TABLE SOURCE_DOC (
     SOURCE_ID integer NOT NULL,
     DOC_ID integer NOT NULL,
@@ -178,6 +194,7 @@ CREATE TABLE SOURCE_DOC (
     PRIMARY KEY (SOURCE_ID,DOC_ID,ORDERING),
     FOREIGN KEY (DOC_ID) REFERENCES DOC (ID)
 );
+
 CREATE TABLE TYPE (
     ID integer NOT NULL,
     TXT varchar(50) NOT NULL,
@@ -185,17 +202,20 @@ CREATE TABLE TYPE (
     PRIMARY KEY (ID),
     FOREIGN KEY (PARENT_ID) REFERENCES TYPE (ID)
 );
+
 CREATE TABLE IF NOT EXISTS "user"
 (
     id INTEGER PRIMARY KEY,
     firstname VARCHAR(60),
     lastname VARCHAR(60)
 );
+
 CREATE TABLE GRAMMAR (
     ID integer NOT NULL,
     TXT varchar(100) NOT NULL,
     PRIMARY KEY (ID)
 );
+
 CREATE TABLE LINKED_GRAMMAR (
     LINKED_ID integer,
     ENTRY_ID integer,
@@ -206,14 +226,23 @@ CREATE TABLE LINKED_GRAMMAR (
     FOREIGN KEY (GRAMMAR_ID) REFERENCES GRAMMAR (ID),
     FOREIGN KEY (GRAMMARTYPE_ID) REFERENCES TYPE (ID)
 );
+
 CREATE INDEX idx_ref_gloss_id on REF(gloss_id);
+
 CREATE INDEX idx_linked_ref_id on LINKED(ref_id);
+
 CREATE INDEX idx_ref_form_id on REF(form_id);
+
 CREATE INDEX idx_linked_entry_id on LINKED(entry_id);
+
 CREATE INDEX idx_entry_form_id on ENTRY(form_id);
+
 CREATE INDEX idx_form_txt on form(txt);
+
 CREATE UNIQUE INDEX idx_linked_grammar_pk on linked_grammar(linked_id, entry_id, grammar_id, ordering, grammartype_id);
+
 CREATE UNIQUE INDEX idx_linked_form_pk on linked_form(linked_id, form_id, ordering);
+
 CREATE VIEW lexicon as
 select e.id id, f.TXT form, l.mnemonic lang_mnemonic,
 l.name lang_name, g.TXT gloss, c.LABEL cat, e.TENGWAR tengwar,
@@ -225,6 +254,7 @@ left outer join language l on e.LANGUAGE_ID = l.ID
 left outer join gloss g on e.GLOSS_ID = g.ID
 left outer join cat c on e.CAT_ID = c.ID
 left outer join type t on e.ENTRYTYPE_ID = t.ID;
+
 CREATE VIEW entrynoteview as
 select e.id entry_id, ed.ORDERING ordering, d.TXT txt from entry e
 join entry_doc ed on e.ID = ed.ENTRY_ID
@@ -232,6 +262,7 @@ join doc d on ed.DOC_ID = d.ID
 join type t on d.DOCTYPE_ID = t.ID
 where t.TXT = 'notes'
 order by ed.ORDERING;
+
 CREATE VIEW beforeview AS
 SELECT 	l.id 			linked_id,
 		 	l.entry_id 	from_entry_id,
@@ -242,6 +273,7 @@ JOIN entry e1 ON e1.id = l.entry_id
 LEFT OUTER JOIN entry e2 ON e2.form_id = lf.form_id AND e2.language_id = l.to_language_id
 WHERE t.txt = 'before'
 ORDER BY from_entry_id, to_entry_id ASC;
+
 CREATE VIEW changeview AS
 SELECT  l.ref_id          refidfrom,
         lf.ordering       lgorder,
@@ -257,6 +289,7 @@ LEFT OUTER JOIN source s ON l.source_id = s.id
 LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
 WHERE t.txt = 'change'
 ORDER BY l.ref_id, lf.ordering ASC;
+
 CREATE VIEW classview AS
 SELECT 	l.entry_id 		entryid,
 			l.mark 			mark,
@@ -270,6 +303,7 @@ JOIN grammar g ON g.id = lg.grammar_id
 JOIN type t2 ON lg.grammartype_id = t2.id
 WHERE t.txt = 'class'
 ORDER BY l.entry_id, lg.ordering, t2.id ASC;
+
 CREATE VIEW cognateview AS
 SELECT  l.entry_id        entryidfrom,
         e2.id             entryidto,
@@ -291,6 +325,7 @@ LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
 LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
 WHERE t.txt = 'cognate'
 ORDER BY l.entry_id, l.ref_id, e2.id, r.id ASC;
+
 CREATE VIEW correctionview AS
 SELECT  l.ref_id          refidfrom,
         r.id              refidto,
@@ -307,6 +342,7 @@ LEFT OUTER JOIN source s ON l.source_id = s.id
 LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
 WHERE t.txt = 'correction'
 ORDER BY l.ref_id, f.id, r.id ASC;
+
 CREATE VIEW inflectview AS
 SELECT  l.entry_id        entryidfrom,
         l.ref_id          refidfrom,
@@ -322,6 +358,7 @@ LEFT OUTER JOIN grammar g ON g.id = lg.grammar_id
 LEFT OUTER JOIN type tgram ON lg.grammartype_id = tgram.id
 WHERE t.txt = 'inflect'
 ORDER BY l.entry_id, l.ref_id, tgram.id, lg.ordering ASC;
+
 CREATE VIEW relatedview AS
 SELECT  l.entry_id        entryidfrom,
         e2.id             entryidto,
@@ -344,6 +381,7 @@ LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
 LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
 WHERE t.txt = 'related'
 ORDER BY l.entry_id, l.ref_id, l.ordering, e2.id, r.id ASC;
+
 CREATE VIEW simplexicon AS
 SELECT e.ID id
   , e.MARK mark
@@ -360,12 +398,14 @@ JOIN gloss g ON e.GLOSS_ID = g.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
 WHERE e.ENTRYTYPE_ID in (1028, 1033, 1034);
+
 CREATE VIEW refglossview AS
 SELECT r.entry_id entry_id, '"' || g.txt || '" ✧ ' || Group_Concat(r.source, '; ') refgloss
 FROM ref r
 JOIN gloss g ON g.id = r.gloss_id
 AND NOT EXISTS (select * FROM linked l WHERE l.ref_id = r.id)
 GROUP BY LOWER(g.txt);
+
 CREATE VIEW refinflectview AS
 SELECT r.entry_id entry_id, f.txt form, gr.txt grammar, gl.txt gloss, ' ✧ ' || Group_Concat(r.source, '; ') sources FROM ref r
 LEFT OUTER JOIN gloss gl ON gl.id = r.gloss_id
@@ -377,6 +417,7 @@ JOIN type t2 ON lg.GRAMMARTYPE_ID = t2.id
 JOIN type t ON l.LINKEDTYPE_ID = t.ID
 WHERE t.txt = 'inflect'
 GROUP BY LOWER(f.txt);
+
 CREATE VIEW derivview AS
 SELECT  l.entry_id        entryidfrom,
         e2.id             entryidto,
@@ -404,6 +445,7 @@ LEFT OUTER JOIN GLOSS g2 ON r.GLOSS_ID = g2.ID
 WHERE t.txt = 'deriv'
 GROUP BY formtxt
 ORDER BY l.entry_id, l.ref_id, lf.ordering, e2.id, r.id ASC;
+
 CREATE VIEW elementview AS
 SELECT  l.entry_id        entryidfrom,
         e2.id             entryidto,
@@ -428,11 +470,13 @@ LEFT OUTER JOIN linked_grammar lg ON lg.linked_id = l.id
 LEFT OUTER JOIN grammar g ON g.id = lg.grammar_id
 WHERE t.txt = 'element'
 ORDER BY l.entry_id, l.ref_id, e2.id, r.id ASC;
+
 CREATE VIEW coolderivview AS
 SELECT entryidfrom AS entry_id, form,
 REPLACE(REPLACE(group_concat(DISTINCT gloss), ',', '; '),';  ', '; ' ) AS glosses,
 REPLACE(group_concat(DISTINCT source), ',', '; ')  AS sources FROM refderivview
 GROUP BY entry_id, form;
+
 CREATE VIEW refderivview AS
 SELECT l.entry_id AS entryidfrom, f.txt AS form,
 REPLACE(REPLACE(group_concat(DISTINCT g.txt), ',', '; '),';  ', '; ' ) AS glosses,
@@ -445,10 +489,12 @@ JOIN type t ON l.LINKEDTYPE_ID = t.ID
 WHERE t.txt = 'deriv'
 AND r.entry_id != l.entry_id
 GROUP BY entryidfrom, form;
+
 CREATE INDEX FORM_NORMALTXT_idx on  FORM
 (
 	NORMALTXT
 );
+
 CREATE VIEW refelementview AS
 SELECT e1.id id
 , upper(lg.mnemonic) lang
@@ -471,10 +517,12 @@ JOIN language lg ON lg.ID = e2.LANGUAGE_ID
 JOIN type t ON l.LINKEDTYPE_ID = t.ID
 WHERE t.txt = 'element'
 GROUP BY e2f.TXT;
+
 CREATE TRIGGER form_update_normaltxt UPDATE OF TXT ON FORM
 BEGIN
     UPDATE FORM SET NORMALTXT = replace(lower(new.TXT),'ð', 'dh') WHERE ID = NEW.ID;
 END;
+
 CREATE TRIGGER form_create_normaltxt AFTER INSERT ON FORM
 BEGIN
     UPDATE FORM SET NORMALTXT = replace(lower(new.TXT),'ð', 'dh') WHERE ID = NEW.ID;
