@@ -1,7 +1,4 @@
-# eldamo-relationaldb
-
-# update for version 0.2.5
-This release is compatible with eldamo v. 0.5.6.1
+# update for Eldamo v0.8
 
 Description of the files:
 
@@ -46,5 +43,16 @@ Of course, there will also be the possibility to enter or edit the central datab
 
 As starting point we decided to 'fork' Paul Strack's phenomenal effort, the Eldamo project @ https://github.com/pfstrack/eldamo by translating his XML-based data model to a relational model. The model of this first commit allows all the data also found in Eldamo.xml, with the exception of the inflection table elements. 
 In this initial commit are included:
+
+
+
+
+# Licensing and attribution
+
+[Eldamo-relationaldb](https://github.com/aduial/eldamo-relationaldb) by [Luthien Dulk, animatrice.nl](https://animatrice.nl) is based on Eldamo - An Elvish Lexicon by Paul Strack ([website](https://eldamo.org) & [Github repository](https://github.com/pfstrack/eldamo))
+
+This repository is licensed under [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/) 
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC_BY--SA_4.0-pink.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 

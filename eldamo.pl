@@ -9,15 +9,15 @@ use File::Path qw(make_path);
 
 $|=1; # this is required to not have the progress dots printed all at the same time
 
-# 's': create SQL files; 'h': print debug hash contents to stdout
+# '-s': create SQL files; '-h': print debug hash contents to stdout
 my $mode = $ARGV[0] // 'X';
 
 # change if needed. If you enter a schema name, postfix with a period
 my $schema = "";
 #my $file = "test.xml";
-my $file = "eldamo-data.0.5.6.1.xml";
+my $file = "eldamo-data08.xml";
 #my $file = "eldamo-data.xml";
-my $outputdir = 'output/';
+my $outputdir = 'output08/';
 
 
 my $twig = XML::Twig->new();
@@ -49,6 +49,7 @@ my @type_rows = ();
 my @srcdoc_rows = ();
 my @entrydoc_rows = ();
 my @langdoc_rows = ();
+my @linkeddoc_rows = ();
 my @entry_rows = ();
 my @linked_rows = ();
 my @ref_rows = ();
@@ -97,11 +98,12 @@ if ($@) {
 
 # some hardcoded values, contained in the schema xml, not the data xml
 my @parenttypes = ('sourcetype', 'doctype', 'linkedtype', 'exampletype', 'grammarroletype', 'entrytype');
-my @doctypes = ('notes', 'cite', 'grammar', 'names', 'phonetics', 'phrases', 'words');
-my @linkedtypes = ('before', 'class', 'cognate', 'deriv', 'element', 'inflect', 'related', 'see', 'see-notes', 'see-further', 'change', 'correction');
+my @doctypes = ('notes', 'cite', 'grammar', 'names', 'neologisms', 'phonetics', 'phrases', 'roots', 'vocabulary', 'words', 'linked');
+# my @doctypes = ('notes', 'cite', 'grammar', 'names', 'neologisms', 'phonetics', 'phrases', 'roots', 'vocabulary', 'words', 'before', 'cognate', 'deriv', 'element', 'inflect', 'related');
+my @linkedtypes = ('before', 'change', 'class', 'cognate', 'combine', 'correction', 'deprecated', 'deriv', 'element', 'inflect', 'related', 'see', 'see-notes', 'see-further');
 my @exampletypes = ('derivexample', 'inflectexample', 'orderexample', 'refexample');
 my @grammarroletypes = ('speechform', 'inflectform', 'inflectvariant', 'classform', 'classvariant');
-my @entrytypes = ('lexical', 'grammatical', 'phonetical', 'root', 'unknown');
+my @entrytypes = ('lexical', 'grammatical', 'phonetical', 'root', 'unknown', 'private_constr_lex', 'common_constr_lex');
 my @langdocs = ('notes', 'grammar', 'names', 'phonetics', 'phrases', 'words');
 
 say "=== start processing ===";
@@ -264,6 +266,13 @@ sub hashlangs{
 		}
 	}
 	print '.';
+	# write retrieved languages to file
+	writesql(\@lang_rows, 'language.sql') if $mode eq "-s";  # table LANGUAGE
+	# re-use lang_rows for hard-coded lines
+   undef @lang_rows;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (0, 'Not defined', 'n/a', NULL);" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1, 'All Languages', 'all', 1);" ;
+	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1001, 'All Languages', 'ALL', 1001);" ;
 	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1000, 'Modern languages', 'ML', NULL);" ;
 	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1010, 'English', 'ENG', 1000);" ;
 	push @lang_rows, "INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1011, 'Čeština (Czech)', 'CZE', 1000);";
@@ -398,7 +407,7 @@ sub parsesourcedoc{
 	no warnings 'uninitialized';
 	my ($doc, $sourcedoctype, $ordering) = @_; # sourcedoctype = notes or cite
 	parsedoc($doc, $sourcedoctype); # always call parsedoc first to set uid 
-	push  @srcdoc_rows, "INSERT INTO ".$schema."SOURCE_DOC(SOURCE_ID, DOC_ID, ORDERING) VALUES ($source_uid, $doc_uid, $ordering);";
+	push  @srcdoc_rows, "INSERT INTO ".$schema."SOURCE_DOC (SOURCE_ID, DOC_ID, ORDERING) VALUES ($source_uid, $doc_uid, $ordering);";
 }
 
 # === FORM =============================================
@@ -408,7 +417,7 @@ sub hashforms{
 	foreach my $word ($root->children('word')){ harvestforms($word); }
 	foreach my $form (sort (unique(@raw_forms))){
 		if ($form ne '') {
-         push @form_rows, "INSERT INTO ".$schema."FORM (ID, TXT) VALUES ('$form_uid', '$form');";
+         push @form_rows, "INSERT INTO ".$schema."FORM (ID, TXT) VALUES ($form_uid, '$form');";
          $formshashbykey {$form_uid} = $form;
          print '.' if ($form_uid % 10000 == 0);
          $form_uid++;
@@ -548,9 +557,9 @@ sub parseword{
 	push @entry_rows, "INSERT INTO ".$schema."ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, CAT_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_cat_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid);";
 	
 	$ordering = 1;
-	foreach my $speeches ($entry->children('speech')){
+	foreach my $speeches ($entry->att('speech')){
 	   foreach my $speech (split(' ', $speeches)){ 
-         push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDENING, GRAMMARTYPE_ID) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering, ".($typeshashbyvalue{'speechform'} // 'X').");"; 
+         push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($entry_uid, ".($grammarshashbyvalue{$speech} // 'X').", $ordering, ".($typeshashbyvalue{'speechform'} // 'X').");"; 
          $ordering++;
 		}
 	}
@@ -655,9 +664,10 @@ sub parseref{
 	my $ref_rulerule_form_uid = ($formshashbyvalue{$ref->att('rl')} // 'NULL');
 	my $ref_mark = $ref->att('mark') // "";
 	my $ref_source_uid = ($sourceshashbyvalue{substr($ref->att('source'), 0, index($ref->att('source'), '/'))} // 'NULL');
+	my $ref_source = $ref->att('source') // "";
 	#say encode_utf8("ref: $ref_uid v=$ref_form_uid l=$ref_lang_uid gloss=$ref_gloss_uid from=$ref_rulefrom_form_uid rule=$ref_rulerule_form_uid rl=$ref_rlrule_form_uid mark=$ref_mark source=$ref_source_uid");
 	
-	push @ref_rows, "INSERT INTO ".$schema."REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID) VALUES ($ref_uid, $entry_uid, $ref_form_uid, $ref_gloss_uid, $ref_lang_uid, $ref_source_uid, '$ref_mark', $ref_rulefrom_form_uid, $ref_rlrule_form_uid, $ref_rulerule_form_uid, $ordering, $entrytype_uid);";
+	push @ref_rows, "INSERT INTO ".$schema."REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID, SOURCE) VALUES ($ref_uid, $entry_uid, $ref_form_uid, $ref_gloss_uid, $ref_lang_uid, $ref_source_uid, '$ref_mark', $ref_rulefrom_form_uid, $ref_rlrule_form_uid, $ref_rulerule_form_uid, $ordering, $entrytype_uid, '$ref_source');";
 	
 	foreach my $change ($ref->children('change')){
 		parselinked($change, $ordering, 1, 'change'); # ref_uid + i1 + source + change_v
@@ -709,7 +719,7 @@ sub parseentrydoc{
 	my ($note, $ordering) = @_;
 	# type note, 
 	parsedoc($note, 'notes'); #first call this to set doc_uid
-	push @entrydoc_rows, "INSERT INTO ".$schema."ENTRY_DOC(ENTRY_ID, DOC_ID, ORDERING) VALUES ($entry_uid, $doc_uid, $ordering);";
+	push @entrydoc_rows, "INSERT INTO ".$schema."ENTRY_DOC (ENTRY_ID, DOC_ID, ORDERING) VALUES ($entry_uid, $doc_uid, $ordering);";
 }
 
 # === DOC =================================================
@@ -735,20 +745,21 @@ sub parselinked{
 	my $lg_ordering = 1; 
 	if (defined $linked->att('form')){
 		foreach my $form (split(' ', $linked->att('form'))){	
-			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $lg_ordering, $form_grammartype_id);";
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$form} // 'X').", $lg_ordering, $form_grammartype_id);";
 			$lg_ordering++;
 		}
 	}
 	$lg_ordering = 1;
 	if (defined $linked->att('variant')){
 		foreach my $variant (split(' ', $linked->att('variant'))){	
-			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR(LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $lg_ordering, $variant_grammartype_id);";
+			push @linkedgrammar_rows, "INSERT INTO ".$schema."LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ($linked_uid, ".($grammarshashbyvalue{$variant} // 'X').", $lg_ordering, $variant_grammartype_id);";
 			$lg_ordering++;
 		}
 	}
 	my $linked_to_lang_uid = defined $linked->att('l') ? ($langshashbyvalue{$linked->att('l')} // 'X') : 'NULL';
 	my $linked_mark = $linked->att('mark') // "";
 	my $linked_source_uid = defined $linked->att('source') ? ($sourceshashbyvalue{substr($linked->att('source'), 0, index($linked->att('source'), '/'))} // 'X') : 'NULL';
+	my $linked_source = $linked->att('source') // "";
 	my $ordex_ordering = 1;
 	foreach my $orderexample ($linked->children('order')){
 		parseexample($orderexample, $ordex_ordering, 2);
@@ -763,10 +774,18 @@ sub parselinked{
 		parseruleseq($linked);
 	}
 	if ($isref == 1){
-		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark');"; 
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $ref_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark', '$linked_source');"; 
 	} else {
-		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark');";
+		push @linked_rows, "INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ($linked_uid, ".($typeshashbyvalue{$linkedtype} // 'X').", $entry_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark', '$linked_source');";
 	}
+	
+	# there's until now always only 1 [[CDATA for any linked, so hard-coding ordering to 1 for now
+	if ($linked->text ne ""){
+	 	my $ordering = 1;
+		parsedoc($linked, 'linked'); # always call parsedoc first to set uid 
+		push  @linkeddoc_rows, "INSERT INTO ".$schema."LINKED_DOC (LINKED_ID, DOC_ID, ORDERING) VALUES ($linked_uid, $doc_uid, $ordering);";
+	}
+	
 	$linked_uid++;
 }
 
@@ -779,11 +798,12 @@ sub parseexample{
 	no warnings 'uninitialized';
 	my $example_form_uid = defined $example->att('v') ? ($formshashbyvalue{$example->att('v')} // $example->att('v')) : 0;
 	my $example_source_uid = defined $example->att('source') ? ($sourceshashbyvalue{substr($example->att('source'), 0, index($example->att('source'), '/'))} // 'X') : 0;
+	my $example_source = $example->att('source') // "";
 	
 	if ($type == 2){
-	   push @example_rows, "INSERT INTO ".$schema."EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($linked_uid, $example_source_uid, $example_form_uid, $ordering, ".($typeshashbyvalue{'orderexample'} // 'X').");";
+	   push @example_rows, "INSERT INTO ".$schema."EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ($linked_uid, $example_source_uid, $example_form_uid, $ordering, ".($typeshashbyvalue{'orderexample'} // 'X').", '$example_source');";
 	} else {
-		push @example_rows, "INSERT INTO ".$schema."EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID) VALUES ($ref_uid, $example_source_uid, $example_form_uid, $ordering, ".(($typeshashbyvalue{$example->att('t').'example'} // $typeshashbyvalue{'refexample'}) // 'X').");";
+		push @example_rows, "INSERT INTO ".$schema."EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ($ref_uid, $example_source_uid, $example_form_uid, $ordering, ".(($typeshashbyvalue{$example->att('t').'example'} // $typeshashbyvalue{'refexample'}) // 'X').", '$example_source');";
 	}
 	$example_uid++;
 }
@@ -793,7 +813,7 @@ sub parseexample{
 #linked_uid in global context
 sub parselinkedform{
 	my ($linkedform, $ordering) = @_;
-	push @linkedform_rows, "INSERT INTO ".$schema."LINKED_FORM(LINKED_ID, FORM_ID, ORDERING) VALUES ($linked_uid, ".($formshashbyvalue{$linkedform} // 'X').", $ordering);";
+	push @linkedform_rows, "INSERT INTO ".$schema."LINKED_FORM (LINKED_ID, FORM_ID, ORDERING) VALUES ($linked_uid, ".($formshashbyvalue{$linkedform} // 'X').", $ordering);";
 }
 
 # === RULE_SEQUENCE =================================================
@@ -859,7 +879,8 @@ sub writesql{
 sub writesql_no_encode{	
 	my $arrayed = $_[0];
 	my $filename = $_[1];
-   open (SQLFILE, ">", $outputdir.$filename) or die "$! error trying to create or overwrite $SQLFILE";
+	# append to previously written rows above (>> instead of >)
+   open (SQLFILE, ">>", $outputdir.$filename) or die "$! error trying to create or overwrite $SQLFILE";
    foreach my $arrayrow (@$arrayed){ say SQLFILE $arrayrow; }
 	close SQLFILE;
 }
@@ -878,6 +899,7 @@ sub writemainsql{
 	writesql(\@example_rows, 'example.sql'); # table EXAMPLE
 	writesql(\@linkedform_rows, 'linked_form.sql'); # table LINKED_FORM
 	writesql(\@rulesequence_rows, 'rulesequence.sql'); # table RULESEQUENCE
+	writesql(\@linkeddoc_rows, 'linked_doc.sql'); # table LINKED_DOC
 }
 
 sub entrytype{
