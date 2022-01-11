@@ -1,4 +1,4 @@
-INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES
+INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES 
 (1, 'Physical World', NULL),
 (100, 'World', 1),
 (101, 'Universe', 1),
@@ -998,7 +998,9 @@ INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES
 (1080, 'Misfortune', 16),
 (1081, 'to Please', 16),
 (1082, 'Please in Polite Phrases', 16),
-(1083, 'Joy', 16),
+(1083, 'Joy', 16);
+COMMIT;
+INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES 
 (1084, 'Glad, Joyful', 16),
 (1085, 'Happy; Happiness', 16),
 (1086, 'to Laugh', 16),

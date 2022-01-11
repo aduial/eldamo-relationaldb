@@ -43,52 +43,50 @@ my $example_uid   = 1;
 my $rule_uid      = 1;
 my $grammar_uid   = 1;
 
-my $insert_type    = 'INSERT INTO ".$schema."TYPE (ID, TXT, PARENT_ID) VALUES ';
-my $insert_grammar = 'INSERT INTO ".$schema."GRAMMAR (ID, TXT) VALUES ';
+my $insert_type    = 'INSERT INTO '.$schema.'TYPE (ID, TXT, PARENT_ID) VALUES ';
+my $insert_grammar = 'INSERT INTO '.$schema.'GRAMMAR (ID, TXT) VALUES ';
 my $insert_language =
-  'INSERT INTO ".$schema."LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ';
+  'INSERT INTO '.$schema.'LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ';
 my $insert_language_doc =
-  'INSERT INTO ".$schema."LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_cat = 'INSERT INTO ".$schema."CAT (ID, LABEL, PARENT_ID) VALUES ';
-my $insert_created = 'INSERT INTO ".$schema."CREATED (ID, TXT) VALUES ';
+  'INSERT INTO '.$schema.'LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ';
+my $insert_cat = 'INSERT INTO '.$schema.'CAT (ID, LABEL, PARENT_ID) VALUES ';
+my $insert_created = 'INSERT INTO '.$schema.'CREATED (ID, TXT) VALUES ';
 my $insert_source =
-  'INSERT INTO ".$schema."SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ';
+  'INSERT INTO '.$schema.'SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ';
 my $insert_source_doc =
-  'INSERT INTO ".$schema."SOURCE_DOC (SOURCE_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_form = 'INSERT INTO ".$schema."FORM (ID, TXT) VALUES ';
+  'INSERT INTO '.$schema.'SOURCE_DOC (SOURCE_ID, DOC_ID, ORDERING) VALUES ';
+my $insert_form = 'INSERT INTO '.$schema.'FORM (ID, TXT) VALUES ';
 my $insert_gloss =
-  'INSERT INTO ".$schema."GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
+  'INSERT INTO '.$schema.'GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
 my $insert_ngloss =
-  'INSERT INTO ".$schema."NGLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
+  'INSERT INTO '.$schema.'NGLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
 my $insert_entry =
-'INSERT INTO ".$schema."ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ';
-my $insert_linked_grammar =
-'INSERT INTO ".$schema."LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
+'INSERT INTO '.$schema.'ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ';
 my $insert_rule =
-'INSERT INTO ".$schema."RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ';
+'INSERT INTO '.$schema.'RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ';
 my $insert_ref =
-'INSERT INTO ".$schema."REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID, SOURCE) VALUES ';
+'INSERT INTO '.$schema.'REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID, SOURCE) VALUES ';
 my $insert_entry_doc =
-  'INSERT INTO ".$schema."ENTRY_DOC (ENTRY_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_doc = 'INSERT INTO ".$schema."DOC (ID, TXT, DOCTYPE_ID) VALUES ';
+  'INSERT INTO '.$schema.'ENTRY_DOC (ENTRY_ID, DOC_ID, ORDERING) VALUES ';
+my $insert_doc = 'INSERT INTO '.$schema.'DOC (ID, TXT, DOCTYPE_ID) VALUES ';
+my $insert_entry_grammar =
+'INSERT INTO '.$schema.'LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
 my $insert_linked_grammar =
-'INSERT INTO ".$schema."LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
-my $insert_linked_grammar =
-'INSERT INTO ".$schema."LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
+'INSERT INTO '.$schema.'LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
+my $insert_reflinked =
+'INSERT INTO '.$schema.'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
 my $insert_linked =
-'INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
-my $insert_linked =
-'INSERT INTO ".$schema."LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
+'INSERT INTO '.$schema.'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
 my $insert_linked_doc =
-  'INSERT INTO ".$schema."LINKED_DOC (LINKED_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_example =
-'INSERT INTO ".$schema."EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
-my $insert_example =
-'INSERT INTO ".$schema."EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
+  'INSERT INTO '.$schema.'LINKED_DOC (LINKED_ID, DOC_ID, ORDERING) VALUES ';
+my $insert_linkedexample =
+'INSERT INTO '.$schema.'EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
+my $insert_refexample =
+'INSERT INTO '.$schema.'EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
 my $insert_linked_form =
-  'INSERT INTO ".$schema."LINKED_FORM (LINKED_ID, FORM_ID, ORDERING) VALUES ';
+  'INSERT INTO '.$schema.'LINKED_FORM (LINKED_ID, FORM_ID, ORDERING) VALUES ';
 my $insert_rulesequence =
-'INSERT INTO ".$schema."RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ';
+'INSERT INTO '.$schema.'RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ';
 
 my @lang_rows          = ();
 my @cat_rows           = ();
@@ -104,14 +102,17 @@ my @entrydoc_rows      = ();
 my @langdoc_rows       = ();
 my @linkeddoc_rows     = ();
 my @entry_rows         = ();
+my @reflinked_rows     = ();
 my @linked_rows        = ();
 my @ref_rows           = ();
 my @rule_rows          = ();
 my @grammar_rows       = ();
+my @entrygrammar_rows  = ();
 my @linkedgrammar_rows = ();
 my @linkedform_rows    = ();
 my @rulesequence_rows  = ();
-my @example_rows       = ();
+my @refexample_rows    = ();
+my @linkedexample_rows = ();
 
 my @raw_forms        = ();
 my @raw_glosses      = ();
@@ -247,8 +248,7 @@ sub hashtypes {
 #undef typeshashbyvalue; it was used to look up parent id's. Then re-create / say it ...
     undef %typeshashbyvalue;
     sayhashkeytovalue( \%typeshashbykey, \%typeshashbyvalue );
-    writesql( $insert_type, \@type_rows, 'type.sql' )
-      if $mode eq "-s";    # table TYPE
+    writesql( $insert_type, \@type_rows, 'type.sql', '>' ) if $mode eq "-s";    # table TYPE
     undef %typeshashbykey;
     undef @type_rows;
     say " done.";
@@ -290,8 +290,7 @@ sub hashgrammar {
     crunchgrammar( [ sort ( unique(@raw_grammarforms) ) ] );
     undef @raw_grammarforms;
     sayhashkeytovalue( \%grammarshashbykey, \%grammarshashbyvalue );
-    writesql( $insert_grammar, \@grammar_rows, 'grammar.sql' )
-      if $mode eq "-s";    # table GRAMMAR
+    writesql( $insert_grammar, \@grammar_rows, 'grammar.sql', '>' ) if $mode eq "-s";    # table GRAMMAR
     undef %grammarshashbykey;
     undef @grammar_rows;
     say " done.";
@@ -380,8 +379,7 @@ sub hashlangs {
     print '.';
 
     # write retrieved languages to file
-    writesql( $insert_language, \@lang_rows, 'language.sql' )
-      if $mode eq "-s";    # table LANGUAGE
+    writesql( $insert_language, \@lang_rows, 'language.sql', '>' ) if $mode eq "-s";    # table LANGUAGE
                            # re-use lang_rows for hard-coded lines
     undef @lang_rows;
     push @lang_rows, "(0, 'Not defined', 'n/a', NULL)";
@@ -410,10 +408,8 @@ sub hashlangs {
     push @lang_rows, "(1029, 'Türk (Turkish)', 'TUR', 1000)";
     push @lang_rows, "(1030, 'Cymraeg (Welsh)', 'WEL', 1000)";
     sayhash( \%langshashbykey ) if $mode eq "-h";
-    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql' )
-      if $mode eq "-s";    # table LANGUAGE
-    writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql' )
-      if $mode eq "-s";    # table LANGUAGE_DOC & DOC
+    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>>' ) if $mode eq "-s"; # table LANGUAGE
+    writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' ) if $mode eq "-s"; # table LANGUAGE_DOC
     undef %langshashbykey;
     undef @lang_rows;
     say " done.";
@@ -470,7 +466,7 @@ sub hashcats {
     print "	 => categories ";
     foreach my $cats ( $root->children('cats') ) { harvestcats($cats); }
     sayhashkeytovalue( \%catshashbykey, \%catshashbyvalue );
-    writesql( $insert_cat, \@cat_rows, 'cat.sql' ) if $mode eq "-s"; # table CAT
+    writesql( $insert_cat, \@cat_rows, 'cat.sql', '>' ) if $mode eq "-s"; # table CAT
     undef %catshashbykey;
     undef @cat_rows;
     say " done.";
@@ -512,8 +508,7 @@ sub hashcreated {
     undef @raw_created;
     sayhashkeytovalue( \%createdhashbykey, \%createdhashbyvalue );
     undef %createdhashbykey;
-    writesql( $insert_created, \@created_rows, 'created.sql' )
-      if $mode eq "-s";    # table CREATED
+    writesql( $insert_created, \@created_rows, 'created.sql', '>' ) if $mode eq "-s";    # table CREATED
     undef @created_rows;
     say " done.";
 }
@@ -536,10 +531,8 @@ sub hashsources {
     }
     sayhashkeytovalue( \%sourceshashbykey, \%sourceshashbyvalue );
     undef %sourceshashbykey;
-    writesql( $insert_source, \@source_rows, 'source.sql' )
-      if $mode eq "-s";    # table SOURCE
-    writesql( $insert_source_doc, \@srcdoc_rows, 'source_doc.sql' )
-      if $mode eq "-s";    # table SOURCE_DOC
+    writesql( $insert_source, \@source_rows, 'source.sql', '>') if $mode eq "-s";    # table SOURCE
+    writesql( $insert_source_doc, \@srcdoc_rows, 'source_doc.sql', '>' ) if $mode eq "-s";    # table SOURCE_DOC
     undef @source_rows;
     undef @srcdoc_rows;
     say " done.";
@@ -596,8 +589,7 @@ sub hashforms {
     undef @raw_forms;
     sayhashkeytovalue( \%formshashbykey, \%formshashbyvalue );
     undef %formshashbykey;
-    writesql( $insert_form, \@form_rows, 'form.sql' )
-      if $mode eq "-s";    # table FORM
+    writesql( $insert_form, \@form_rows, 'form.sql', '>') if $mode eq "-s";    # table FORM
     undef @form_rows;
     say " done.";
 }
@@ -710,8 +702,7 @@ sub hashglosses {
     undef @raw_glosses;
     sayhashkeytovalue( \%glosseshashbykey, \%glosseshashbyvalue );
     undef %glosseshashbykey;
-    writesql( $insert_gloss, \@gloss_rows, 'gloss.sql' )
-      if $mode eq "-s";    # table GLOSS
+    writesql( $insert_gloss, \@gloss_rows, 'gloss.sql', '>') if $mode eq "-s";    # table GLOSS
     undef @gloss_rows;
     say " done.";
 }
@@ -743,8 +734,7 @@ sub hashnglosses {
     undef @raw_nglosses;
     sayhashkeytovalue( \%nglosseshashbykey, \%nglosseshashbyvalue );
     undef %nglosseshashbykey;
-    writesql( $insert_ngloss, \@ngloss_rows, 'ngloss.sql' )
-      if $mode eq "-s";    # table NGLOSS
+    writesql( $insert_ngloss, \@ngloss_rows, 'ngloss.sql', '>') if $mode eq "-s";    # table NGLOSS
     undef @ngloss_rows;
     say " done.";
 }
@@ -803,7 +793,7 @@ sub parseword {
     $ordering = 1;
     foreach my $speeches ( $entry->att('speech') ) {
         foreach my $speech ( split( ' ', $speeches ) ) {
-            push @linkedgrammar_rows,
+            push @entrygrammar_rows,
                 "($entry_uid, "
               . ( $grammarshashbyvalue{$speech} // 'X' )
               . ", $ordering, "
@@ -1066,10 +1056,13 @@ sub parselinked {
       : 'NULL';
     my $linked_source = $linked->att('source') // "";
     my $ordex_ordering = 1;
-    foreach my $orderexample ( $linked->children('order') ) {
-        parseexample( $orderexample, $ordex_ordering, 2 );
-        $ordex_ordering++;
-    }
+    
+#    TODO - this was apparently changed. The order examples occur in BEFORE
+#    elements of phonetic rules and in other RULES, dismiss for the time being
+#    foreach my $orderexample ( $linked->children('order') ) {
+#        parseexample( $orderexample, $ordex_ordering, 2 );
+#        $ordex_ordering++;
+#    }
 
     parselinkedform( $linked->att('v'),  1 ) if ( defined $linked->att('v') );
     parselinkedform( $linked->att('i1'), 2 ) if ( defined $linked->att('i1') );
@@ -1080,7 +1073,7 @@ sub parselinked {
         parseruleseq($linked);
     }
     if ( $isref == 1 ) {
-        push @linked_rows,
+        push @reflinked_rows,
             "($linked_uid, "
           . ( $typeshashbyvalue{$linkedtype} // 'X' )
           . ", $entry_uid, $ref_uid, $linked_to_lang_uid, $linkedordering, $linked_source_uid, '$linked_mark', '$linked_source')";
@@ -1128,13 +1121,13 @@ sub parseexample {
     my $example_source = $example->att('source') // "";
 
     if ( $type == 2 ) {
-        push @example_rows,
+        push @linkedexample_rows,
             "($linked_uid, $example_source_uid, $example_form_uid, $ordering, "
           . ( $typeshashbyvalue{'orderexample'} // 'X' )
           . ", '$example_source')";
     }
     else {
-        push @example_rows,
+        push @refexample_rows,
           "($ref_uid, $example_source_uid, $example_form_uid, $ordering, "
           . (
             (
@@ -1228,23 +1221,27 @@ sub sayarray {
 }
 
 sub writesql {
-    my $insertinto = $_[0];
-    my $arrayed    = $_[1];
-    my $filename   = $_[2];
-    my $rows       = 1;
-    my $arraysize  = @$arrayed;
-    open( SQLFILE, ">", $outputdir . $filename )
+    my $insertinto  = $_[0];
+    my $arrayed     = $_[1];
+    my $filename    = $_[2];
+    my $writeappend = $_[3];
+    my $rows        = 1;
+    my $arraysize   = @$arrayed;
+    open( SQLFILE, $writeappend, $outputdir . $filename )
       or die "$! error trying to create or overwrite $SQLFILE";
     say SQLFILE encode_utf8($insertinto);
     foreach my $arrayrow (@$arrayed) {
-
         if ( $rows % 1000 == 0 ) {
             say SQLFILE encode_utf8( $arrayrow . ";" );
             say SQLFILE encode_utf8("COMMIT;");
             say SQLFILE encode_utf8($insertinto) if ( $arraysize % 1000 != 0 );
         }
         else {
-            say SQLFILE encode_utf8($arrayrow);
+          if ( $rows == $arraysize ) {
+            say SQLFILE encode_utf8($arrayrow . ";");
+          } else {
+            say SQLFILE encode_utf8($arrayrow . ",");
+          }
         }
         $rows++;
     }
@@ -1252,12 +1249,13 @@ sub writesql {
 }
 
 sub writesql_no_encode {
-    my $insertinto = $_[0];
-    my $arrayed    = $_[1];
-    my $filename   = $_[2];
-    my $rows       = 1;
-    my $arraysize  = @$arrayed;
-    open( SQLFILE, ">", $outputdir . $filename )
+    my $insertinto  = $_[0];
+    my $arrayed     = $_[1];
+    my $filename    = $_[2];
+    my $writeappend = $_[3];
+    my $rows        = 1;
+    my $arraysize   = @$arrayed;
+    open( SQLFILE, $writeappend, $outputdir . $filename )
       or die "$! error trying to create or overwrite $SQLFILE";
     say SQLFILE $insertinto;
     foreach my $arrayrow (@$arrayed) {
@@ -1265,9 +1263,12 @@ sub writesql_no_encode {
             say SQLFILE $arrayrow . ";";
             say SQLFILE "COMMIT;";
             say SQLFILE $insertinto if ( $arraysize % 1000 != 0 );
-        }
-        else {
-            say SQLFILE $arrayrow;
+        } else {
+          if ( $rows == $arraysize ) {
+            say SQLFILE $arrayrow . ";";
+          } else {
+            say SQLFILE $arrayrow . ",";
+          }
         }
         $rows++;
     }
@@ -1288,17 +1289,21 @@ sub writesql_no_encode {
 # === FINALLY =================================================
 
 sub writemainsql {
-    writesql( $insert_entry, \@entry_rows, 'entry.sql' );
-    writesql( $insert_linked_grammar, \@linkedgrammar_rows, 'linked_grammar.sql' );
-    writesql( $insert_rule, \@rule_rows, 'rule.sql' );
-    writesql( $insert_ref, \@ref_rows, 'ref.sql' );
-    writesql( $insert_entry_doc, \@entrydoc_rows, 'entry_doc.sql' );
-    writesql( $insert_doc, \@doc_rows, 'doc.sql' );
-    writesql( $insert_linked, \@linked_rows, 'linked.sql' );
-    writesql( $insert_example, \@example_rows, 'example.sql' );
-    writesql( $insert_linked_form, \@linkedform_rows, 'linked_form.sql' );
-    writesql( $insert_rulesequence, \@rulesequence_rows, 'rulesequence.sql' );
-    writesql( $insert_linked_doc, \@linkeddoc_rows, 'linked_doc.sql' );
+    writesql( $insert_entry, \@entry_rows, 'entry.sql', '>' );
+    writesql( $insert_entry_grammar, \@entrygrammar_rows, 'linked_grammar.sql', '>' );
+    writesql( $insert_linked_grammar, \@linkedgrammar_rows, 'linked_grammar.sql', '>>' );
+    writesql( $insert_rule, \@rule_rows, 'rule.sql', '>' );
+    writesql( $insert_ref, \@ref_rows, 'ref.sql', '>' );
+    writesql( $insert_entry_doc, \@entrydoc_rows, 'entry_doc.sql', '>' );
+    writesql( $insert_doc, \@doc_rows, 'doc.sql', '>' );
+    writesql( $insert_linked, \@linked_rows, 'linked.sql', '>' );
+    writesql( $insert_reflinked, \@reflinked_rows, 'linked.sql', '>>' );
+    # TODO see comment above about changes in the schema re. BEFORE examples and RULES
+#    writesql( $insert_linkedexample, \@linkedexample_rows, 'example.sql', '>' );
+    writesql( $insert_refexample, \@refexample_rows, 'example.sql', '>>' );
+    writesql( $insert_linked_form, \@linkedform_rows, 'linked_form.sql', '>' );
+    writesql( $insert_rulesequence, \@rulesequence_rows, 'rulesequence.sql', '>' );
+    writesql( $insert_linked_doc, \@linkeddoc_rows, 'linked_doc.sql', '>' );
 }
 
 sub entrytype {

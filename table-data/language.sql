@@ -1,90 +1,92 @@
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (100, 'Combined (Neo) Languages', 'neo', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (101, 'Neo-Primitive Elvish', 'np', 100);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (102, 'Neo-Quenya', 'nq', 101);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (103, 'Neo-Sindarin', 'ns', 101);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (104, 'Late Period (1950-1973)', 'late', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (105, 'Primitive Elvish', 'p', 104);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (106, 'Ancient Quenya', 'aq', 105);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (107, 'Quenya', 'q', 106);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (108, 'Vanyarin', 'van', 106);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (109, 'Ancient Telerin', 'at', 105);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (110, 'Telerin', 't', 109);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (111, 'Old Sindarin', 'os', 109);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (112, 'Sindarin', 's', 111);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (113, 'North Sindarin', 'norths', 111);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (114, 'Nandorin', 'nan', 109);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (115, 'Avarin', 'av', 105);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (116, 'Mannish Languages', NULL, 104);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (117, 'Edain', 'ed', 116);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (118, 'Primitive Adûnaic', 'pad', 117);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (119, 'Adûnaic', 'ad', 118);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (120, 'Westron', 'wes', 119);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (121, 'Rohirric', 'roh', 116);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (122, 'Wose', 'wos', 116);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (123, 'Dunlending', 'dun', 116);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (124, 'Easterling', 'eas', 116);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (125, 'Other Languages', NULL, 104);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (126, 'Khuzdul', 'kh', 125);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (127, 'Khuzdul (External)', 'khx', 125);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (128, 'Black Speech', 'bs', 125);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (129, 'Valarin', 'val', 125);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (130, 'Entish', 'ent', 125);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (131, 'Writing Systems', NULL, 104);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (132, 'Tengwar', 'teng', 131);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (133, 'Cirth', 'cir', 131);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (134, 'Sarati', 'sar', 131);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (135, 'Unknown', 'un', 104);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (136, 'Middle Period (1930-1950)', 'middle', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (137, 'Middle Primitive Elvish', 'mp', 136);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (138, 'Middle Ancient Quenya', 'maq', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (139, 'Middle Quenya', 'mq', 138);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (140, 'Lindarin', 'lin', 138);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (141, 'Old Noldorin', 'on', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (142, 'Noldorin', 'n', 141);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (143, 'Middle Telerin', 'mt', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (144, 'Ilkorin/Doriathrin', 'ilk', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (145, 'Danian/Ossiriandic', 'dan', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (146, 'Lemberin', 'lem', 137);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (147, 'Taliska', 'tal', 136);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (148, 'Early Period (1910-1930)', 'early', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (149, 'Early Primitive Elvish', 'ep', 148);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (150, 'Early Quenya', 'eq', 149);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (151, 'Gnomish', 'g', 149);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (152, 'Early Noldorin', 'en', 149);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (153, 'Solosimpi/Early Telerin', 'et', 149);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (154, 'Early Ilkorin', 'eilk', 149);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (155, 'fal', 'fal', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (156, 'bel', 'bel', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (157, 'eon', 'eon', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (158, 'oss', 'oss', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (159, 'dor', 'dor', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (160, 'edan', 'edan', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (161, 'lon', 'lon', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (162, 'ln', 'ln', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (163, 'dor ilk', 'dor ilk', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (164, 'sol', 'sol', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (0, 'Not defined', 'n/a', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1, 'All Languages', 'all', 1);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1001, 'All Languages', 'ALL', 1001);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1000, 'Modern languages', 'ML', NULL);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1010, 'English', 'ENG', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1011, 'Čeština (Czech)', 'CZE', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1012, 'Dansk (Danish)', 'DAN', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1013, 'Deutsch (German)', 'GER', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1014, 'Nederlands (Dutch)', 'DUT', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1015, 'Français (French)', 'FRA', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1016, 'Italiano (Italian)', 'ITA', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1017, 'Norsk (Norwegian)', 'NOR', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1018, 'Nynorsk (Nynorsk Norwegian)', 'NNO', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1019, 'Bokmal (Bokmal Norwegian)', 'NOB', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1020, 'Polskie (Polish)', 'POL', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1021, 'Português (Portuguese)', 'POR', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1022, 'Română (Romanian)', 'RUM', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1023, 'Русский (Russian)', 'RUS', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1024, 'Slovenský (Slovak)', 'SLO', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1025, 'Slovenščina (Slovenian)', 'SLV', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1026, 'Español (Spanish)', 'SPA', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1027, 'Српски (Serbian)', 'SRP', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1028, 'Swedish (Svenska)', 'SWE', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1029, 'Türk (Turkish)', 'TUR', 1000);
-INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES (1030, 'Cymraeg (Welsh)', 'WEL', 1000);
+INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES 
+(100, 'Combined (Neo) Languages', 'neo', NULL),
+(101, 'Neo-Primitive Elvish', 'np', 100),
+(102, 'Neo-Quenya', 'nq', 101),
+(103, 'Neo-Sindarin', 'ns', 101),
+(104, 'Late Period (1950-1973)', 'late', NULL),
+(105, 'Primitive Elvish', 'p', 104),
+(106, 'Ancient Quenya', 'aq', 105),
+(107, 'Quenya', 'q', 106),
+(108, 'Vanyarin', 'van', 106),
+(109, 'Ancient Telerin', 'at', 105),
+(110, 'Telerin', 't', 109),
+(111, 'Old Sindarin', 'os', 109),
+(112, 'Sindarin', 's', 111),
+(113, 'North Sindarin', 'norths', 111),
+(114, 'Nandorin', 'nan', 109),
+(115, 'Avarin', 'av', 105),
+(116, 'Mannish Languages', NULL, 104),
+(117, 'Edain', 'ed', 116),
+(118, 'Primitive Adûnaic', 'pad', 117),
+(119, 'Adûnaic', 'ad', 118),
+(120, 'Westron', 'wes', 119),
+(121, 'Rohirric', 'roh', 116),
+(122, 'Wose', 'wos', 116),
+(123, 'Dunlending', 'dun', 116),
+(124, 'Easterling', 'eas', 116),
+(125, 'Other Languages', NULL, 104),
+(126, 'Khuzdul', 'kh', 125),
+(127, 'Khuzdul (External)', 'khx', 125),
+(128, 'Black Speech', 'bs', 125),
+(129, 'Valarin', 'val', 125),
+(130, 'Entish', 'ent', 125),
+(131, 'Writing Systems', NULL, 104),
+(132, 'Tengwar', 'teng', 131),
+(133, 'Cirth', 'cir', 131),
+(134, 'Sarati', 'sar', 131),
+(135, 'Unknown', 'un', 104),
+(136, 'Middle Period (1930-1950)', 'middle', NULL),
+(137, 'Middle Primitive Elvish', 'mp', 136),
+(138, 'Middle Ancient Quenya', 'maq', 137),
+(139, 'Middle Quenya', 'mq', 138),
+(140, 'Lindarin', 'lin', 138),
+(141, 'Old Noldorin', 'on', 137),
+(142, 'Noldorin', 'n', 141),
+(143, 'Middle Telerin', 'mt', 137),
+(144, 'Ilkorin/Doriathrin', 'ilk', 137),
+(145, 'Danian/Ossiriandic', 'dan', 137),
+(146, 'Lemberin', 'lem', 137),
+(147, 'Taliska', 'tal', 136),
+(148, 'Early Period (1910-1930)', 'early', NULL),
+(149, 'Early Primitive Elvish', 'ep', 148),
+(150, 'Early Quenya', 'eq', 149),
+(151, 'Gnomish', 'g', 149),
+(152, 'Early Noldorin', 'en', 149),
+(153, 'Solosimpi/Early Telerin', 'et', 149),
+(154, 'Early Ilkorin', 'eilk', 149),
+(155, 'dor ilk', 'dor ilk', NULL),
+(156, 'lon', 'lon', NULL),
+(157, 'oss', 'oss', NULL),
+(158, 'dor', 'dor', NULL),
+(159, 'sol', 'sol', NULL),
+(160, 'edan', 'edan', NULL),
+(161, 'ln', 'ln', NULL),
+(162, 'eon', 'eon', NULL),
+(163, 'fal', 'fal', NULL),
+(164, 'bel', 'bel', NULL);
+INSERT INTO LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES 
+(0, 'Not defined', 'n/a', NULL),
+(1, 'All Languages', 'all', 1),
+(1001, 'All Languages', 'ALL', 1001),
+(1000, 'Modern languages', 'ML', NULL),
+(1010, 'English', 'ENG', 1000),
+(1011, 'Čeština (Czech)', 'CZE', 1000),
+(1012, 'Dansk (Danish)', 'DAN', 1000),
+(1013, 'Deutsch (German)', 'GER', 1000),
+(1014, 'Nederlands (Dutch)', 'DUT', 1000),
+(1015, 'Français (French)', 'FRA', 1000),
+(1016, 'Italiano (Italian)', 'ITA', 1000),
+(1017, 'Norsk (Norwegian)', 'NOR', 1000),
+(1018, 'Nynorsk (Nynorsk Norwegian)', 'NNO', 1000),
+(1019, 'Bokmal (Bokmal Norwegian)', 'NOB', 1000),
+(1020, 'Polskie (Polish)', 'POL', 1000),
+(1021, 'Português (Portuguese)', 'POR', 1000),
+(1022, 'Română (Romanian)', 'RUM', 1000),
+(1023, 'Русский (Russian)', 'RUS', 1000),
+(1024, 'Slovenský (Slovak)', 'SLO', 1000),
+(1025, 'Slovenščina (Slovenian)', 'SLV', 1000),
+(1026, 'Español (Spanish)', 'SPA', 1000),
+(1027, 'Српски (Serbian)', 'SRP', 1000),
+(1028, 'Swedish (Svenska)', 'SWE', 1000),
+(1029, 'Türk (Turkish)', 'TUR', 1000),
+(1030, 'Cymraeg (Welsh)', 'WEL', 1000);

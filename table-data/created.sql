@@ -1,119 +1,120 @@
-INSERT INTO CREATED (ID, TXT) VALUES (1, 'ABNW');
-INSERT INTO CREATED (ID, TXT) VALUES (2, 'ABNW, NQNT');
-INSERT INTO CREATED (ID, TXT) VALUES (3, 'Aleksandr Zapragajev');
-INSERT INTO CREATED (ID, TXT) VALUES (4, 'Ales Bican, ABNW');
-INSERT INTO CREATED (ID, TXT) VALUES (5, 'Ales Bican, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (6, 'Alex Grigny de Castro, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (7, 'Alexander Zapragajev');
-INSERT INTO CREATED (ID, TXT) VALUES (8, 'Ambar Eldaron');
-INSERT INTO CREATED (ID, TXT) VALUES (9, 'Boris Shapiro');
-INSERT INTO CREATED (ID, TXT) VALUES (10, 'Boris Shapiro, Helge Fauskanger, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (11, 'Boris Shapiro, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (12, 'Boris Shapiro, PPQ, NQNT');
-INSERT INTO CREATED (ID, TXT) VALUES (13, 'Boris Shapiro, Petri Tikka, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (14, 'Common');
-INSERT INTO CREATED (ID, TXT) VALUES (15, 'Damien Bador');
-INSERT INTO CREATED (ID, TXT) VALUES (16, 'David Kiltz, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (17, 'David Kiltz, PPQ, Helge Fauskanger, NQNT');
-INSERT INTO CREATED (ID, TXT) VALUES (18, 'David Salo');
-INSERT INTO CREATED (ID, TXT) VALUES (19, 'David Salo, Fiona Jallings, FJNS');
-INSERT INTO CREATED (ID, TXT) VALUES (20, 'David Salo, GS');
-INSERT INTO CREATED (ID, TXT) VALUES (21, 'David Salo, GS, Ambar Eldaron');
-INSERT INTO CREATED (ID, TXT) VALUES (22, 'David Salo, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (23, 'David Salo, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (24, 'Didier Willis');
-INSERT INTO CREATED (ID, TXT) VALUES (25, 'Didier Willis, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (26, 'Dírheron');
-INSERT INTO CREATED (ID, TXT) VALUES (27, 'Eddin Najetovic, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (28, 'Elaran');
-INSERT INTO CREATED (ID, TXT) VALUES (29, 'Elaran, Fiona Jallings, FJNS');
-INSERT INTO CREATED (ID, TXT) VALUES (30, 'Elaran, Hialmr');
-INSERT INTO CREATED (ID, TXT) VALUES (31, 'Elaran, Hialmr, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (32, 'Eli Bar-Yahalom, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (33, 'Elvishmouse');
-INSERT INTO CREATED (ID, TXT) VALUES (34, 'EruannoVG');
-INSERT INTO CREATED (ID, TXT) VALUES (35, 'Fayanzār');
-INSERT INTO CREATED (ID, TXT) VALUES (36, 'Fiona Jallings');
-INSERT INTO CREATED (ID, TXT) VALUES (37, 'Fiona Jallings, Elaran');
-INSERT INTO CREATED (ID, TXT) VALUES (38, 'Fiona Jallings, FGNS');
-INSERT INTO CREATED (ID, TXT) VALUES (39, 'Fiona Jallings, FJNS');
-INSERT INTO CREATED (ID, TXT) VALUES (40, 'Fiona Jallings, NGNS');
-INSERT INTO CREATED (ID, TXT) VALUES (41, 'Greta Rudolph, Boris Shapiro, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (42, 'Greta Rudolph, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (43, 'Gábor Lőrinczi');
-INSERT INTO CREATED (ID, TXT) VALUES (44, 'Gábor Lőrinczi, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (45, 'HSD, Paul Strack');
-INSERT INTO CREATED (ID, TXT) VALUES (46, 'Helge Fauskanger');
-INSERT INTO CREATED (ID, TXT) VALUES (47, 'Helge Fauskanger, NQNT');
-INSERT INTO CREATED (ID, TXT) VALUES (48, 'Helge Fauskanger, NQNT, Aldaleon');
-INSERT INTO CREATED (ID, TXT) VALUES (49, 'Helge Fauskanger, NQNT, NQ-Wiki');
-INSERT INTO CREATED (ID, TXT) VALUES (50, 'Helge Fauskanger, NQNT, Robert Reynolds');
-INSERT INTO CREATED (ID, TXT) VALUES (51, 'Helge Fauskanger, NQNT, Sami Paldanius');
-INSERT INTO CREATED (ID, TXT) VALUES (52, 'Helge Fauskanger, NQNT, Tamas Ferencz');
-INSERT INTO CREATED (ID, TXT) VALUES (53, 'Helge Fauskanger, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (54, 'Helge Fauskanger, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (55, 'Hialmr');
-INSERT INTO CREATED (ID, TXT) VALUES (56, 'Hialmr, Elaran');
-INSERT INTO CREATED (ID, TXT) VALUES (57, 'Hialmr, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (58, 'Hjalmar Holm');
-INSERT INTO CREATED (ID, TXT) VALUES (59, 'Jack Harrison');
-INSERT INTO CREATED (ID, TXT) VALUES (60, 'Jenna Carpenter');
-INSERT INTO CREATED (ID, TXT) VALUES (61, 'Kevin B Walsh, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (62, 'Lokyt');
-INSERT INTO CREATED (ID, TXT) VALUES (63, 'Lucas Novak, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (64, 'Mans Bjorkman, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (65, 'Matt Dinse');
-INSERT INTO CREATED (ID, TXT) VALUES (66, 'Matt Dinse, Hjalmar Holm');
-INSERT INTO CREATED (ID, TXT) VALUES (67, 'Matt Dinse, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (68, 'Mellonath Daeron, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (69, 'NQ-Wiki');
-INSERT INTO CREATED (ID, TXT) VALUES (70, 'NQ-Wiki, NQNT');
-INSERT INTO CREATED (ID, TXT) VALUES (71, 'NQ-Wiki, Tamas Ferencz');
-INSERT INTO CREATED (ID, TXT) VALUES (72, 'Nicholas D. Kontovas, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (73, 'Orondil');
-INSERT INTO CREATED (ID, TXT) VALUES (74, 'PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (75, 'PPQ, Petri Tikka');
-INSERT INTO CREATED (ID, TXT) VALUES (76, 'Paul Strack');
-INSERT INTO CREATED (ID, TXT) VALUES (77, 'Paul Strack, Ambar Eldaron');
-INSERT INTO CREATED (ID, TXT) VALUES (78, 'Paul Strack, Shihali');
-INSERT INTO CREATED (ID, TXT) VALUES (79, 'Paul Strack, Ygrain');
-INSERT INTO CREATED (ID, TXT) VALUES (80, 'Petri Tikka');
-INSERT INTO CREATED (ID, TXT) VALUES (81, 'Petri Tikka, A.B., PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (82, 'Petri Tikka, Eddin Najetovic, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (83, 'Petri Tikka, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (84, 'Raccoon');
-INSERT INTO CREATED (ID, TXT) VALUES (85, 'Robert B Wilson, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (86, 'Robert Reynolds');
-INSERT INTO CREATED (ID, TXT) VALUES (87, 'Robert Reynolds, Tamas Ferencz, Helge Fauskanger, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (88, 'Roman Rausch');
-INSERT INTO CREATED (ID, TXT) VALUES (89, 'Roman Rausch, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (90, 'Ryszard Derdzinski, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (91, 'Ryszard Derdzinski, PPW');
-INSERT INTO CREATED (ID, TXT) VALUES (92, 'Röandil');
-INSERT INTO CREATED (ID, TXT) VALUES (93, 'Sami Paldanius');
-INSERT INTO CREATED (ID, TXT) VALUES (94, 'Sami Paldanius, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (95, 'Sami Paldanius, VQP, Tamas Ferencz');
-INSERT INTO CREATED (ID, TXT) VALUES (96, 'Shihali');
-INSERT INTO CREATED (ID, TXT) VALUES (97, 'Shihali, Lokyt, Elaran, Paul Strack');
-INSERT INTO CREATED (ID, TXT) VALUES (98, 'Stephen St. John');
-INSERT INTO CREATED (ID, TXT) VALUES (99, 'Steve - Ríon');
-INSERT INTO CREATED (ID, TXT) VALUES (100, 'Súlien');
-INSERT INTO CREATED (ID, TXT) VALUES (101, 'Tamas Ferencz');
-INSERT INTO CREATED (ID, TXT) VALUES (102, 'Tamas Ferencz, Alexander Zapragajev, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (103, 'Tamas Ferencz, Helge Fauskanger, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (104, 'Tamas Ferencz, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (105, 'Tamas Ferencz, Robert Reynolds');
-INSERT INTO CREATED (ID, TXT) VALUES (106, 'Tamas Ferencz, Sami Paldanius');
-INSERT INTO CREATED (ID, TXT) VALUES (107, 'Tamas Ferencz, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (108, 'Terry Dock, PPQ');
-INSERT INTO CREATED (ID, TXT) VALUES (109, 'Terry Dock, PPQ, Yitzik');
-INSERT INTO CREATED (ID, TXT) VALUES (110, 'Thorsten Renk');
-INSERT INTO CREATED (ID, TXT) VALUES (111, 'Unknown');
-INSERT INTO CREATED (ID, TXT) VALUES (112, 'VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (113, 'Valeria Barouch, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (114, 'Verilme');
-INSERT INTO CREATED (ID, TXT) VALUES (115, 'Yitzik');
-INSERT INTO CREATED (ID, TXT) VALUES (116, 'Yitzik, Tamas Ferencz');
-INSERT INTO CREATED (ID, TXT) VALUES (117, 'Yitzik, VQP');
-INSERT INTO CREATED (ID, TXT) VALUES (118, 'Ánweg');
-INSERT INTO CREATED (ID, TXT) VALUES (119, 'Ицхак Пензев (Yitzik Penzev)');
+INSERT INTO CREATED (ID, TXT) VALUES 
+(1, 'ABNW'),
+(2, 'ABNW, NQNT'),
+(3, 'Aleksandr Zapragajev'),
+(4, 'Ales Bican, ABNW'),
+(5, 'Ales Bican, PPQ'),
+(6, 'Alex Grigny de Castro, PPQ'),
+(7, 'Alexander Zapragajev'),
+(8, 'Ambar Eldaron'),
+(9, 'Boris Shapiro'),
+(10, 'Boris Shapiro, Helge Fauskanger, PPQ'),
+(11, 'Boris Shapiro, PPQ'),
+(12, 'Boris Shapiro, PPQ, NQNT'),
+(13, 'Boris Shapiro, Petri Tikka, PPQ'),
+(14, 'Common'),
+(15, 'Damien Bador'),
+(16, 'David Kiltz, PPQ'),
+(17, 'David Kiltz, PPQ, Helge Fauskanger, NQNT'),
+(18, 'David Salo'),
+(19, 'David Salo, Fiona Jallings, FJNS'),
+(20, 'David Salo, GS'),
+(21, 'David Salo, GS, Ambar Eldaron'),
+(22, 'David Salo, PPQ'),
+(23, 'David Salo, VQP'),
+(24, 'Didier Willis'),
+(25, 'Didier Willis, PPQ'),
+(26, 'Dírheron'),
+(27, 'Eddin Najetovic, PPQ'),
+(28, 'Elaran'),
+(29, 'Elaran, Fiona Jallings, FJNS'),
+(30, 'Elaran, Hialmr'),
+(31, 'Elaran, Hialmr, VQP'),
+(32, 'Eli Bar-Yahalom, PPQ'),
+(33, 'Elvishmouse'),
+(34, 'EruannoVG'),
+(35, 'Fayanzār'),
+(36, 'Fiona Jallings'),
+(37, 'Fiona Jallings, Elaran'),
+(38, 'Fiona Jallings, FGNS'),
+(39, 'Fiona Jallings, FJNS'),
+(40, 'Fiona Jallings, NGNS'),
+(41, 'Greta Rudolph, Boris Shapiro, PPQ'),
+(42, 'Greta Rudolph, PPQ'),
+(43, 'Gábor Lőrinczi'),
+(44, 'Gábor Lőrinczi, VQP'),
+(45, 'HSD, Paul Strack'),
+(46, 'Helge Fauskanger'),
+(47, 'Helge Fauskanger, NQNT'),
+(48, 'Helge Fauskanger, NQNT, Aldaleon'),
+(49, 'Helge Fauskanger, NQNT, NQ-Wiki'),
+(50, 'Helge Fauskanger, NQNT, Robert Reynolds'),
+(51, 'Helge Fauskanger, NQNT, Sami Paldanius'),
+(52, 'Helge Fauskanger, NQNT, Tamas Ferencz'),
+(53, 'Helge Fauskanger, PPQ'),
+(54, 'Helge Fauskanger, VQP'),
+(55, 'Hialmr'),
+(56, 'Hialmr, Elaran'),
+(57, 'Hialmr, VQP'),
+(58, 'Hjalmar Holm'),
+(59, 'Jack Harrison'),
+(60, 'Jenna Carpenter'),
+(61, 'Kevin B Walsh, VQP'),
+(62, 'Lokyt'),
+(63, 'Lucas Novak, PPQ'),
+(64, 'Mans Bjorkman, PPQ'),
+(65, 'Matt Dinse'),
+(66, 'Matt Dinse, Hjalmar Holm'),
+(67, 'Matt Dinse, VQP'),
+(68, 'Mellonath Daeron, PPQ'),
+(69, 'NQ-Wiki'),
+(70, 'NQ-Wiki, NQNT'),
+(71, 'NQ-Wiki, Tamas Ferencz'),
+(72, 'Nicholas D. Kontovas, PPQ'),
+(73, 'Orondil'),
+(74, 'PPQ'),
+(75, 'PPQ, Petri Tikka'),
+(76, 'Paul Strack'),
+(77, 'Paul Strack, Ambar Eldaron'),
+(78, 'Paul Strack, Shihali'),
+(79, 'Paul Strack, Ygrain'),
+(80, 'Petri Tikka'),
+(81, 'Petri Tikka, A.B., PPQ'),
+(82, 'Petri Tikka, Eddin Najetovic, PPQ'),
+(83, 'Petri Tikka, PPQ'),
+(84, 'Raccoon'),
+(85, 'Robert B Wilson, PPQ'),
+(86, 'Robert Reynolds'),
+(87, 'Robert Reynolds, Tamas Ferencz, Helge Fauskanger, PPQ'),
+(88, 'Roman Rausch'),
+(89, 'Roman Rausch, VQP'),
+(90, 'Ryszard Derdzinski, PPQ'),
+(91, 'Ryszard Derdzinski, PPW'),
+(92, 'Röandil'),
+(93, 'Sami Paldanius'),
+(94, 'Sami Paldanius, VQP'),
+(95, 'Sami Paldanius, VQP, Tamas Ferencz'),
+(96, 'Shihali'),
+(97, 'Shihali, Lokyt, Elaran, Paul Strack'),
+(98, 'Stephen St. John'),
+(99, 'Steve - Ríon'),
+(100, 'Súlien'),
+(101, 'Tamas Ferencz'),
+(102, 'Tamas Ferencz, Alexander Zapragajev, VQP'),
+(103, 'Tamas Ferencz, Helge Fauskanger, VQP'),
+(104, 'Tamas Ferencz, PPQ'),
+(105, 'Tamas Ferencz, Robert Reynolds'),
+(106, 'Tamas Ferencz, Sami Paldanius'),
+(107, 'Tamas Ferencz, VQP'),
+(108, 'Terry Dock, PPQ'),
+(109, 'Terry Dock, PPQ, Yitzik'),
+(110, 'Thorsten Renk'),
+(111, 'Unknown'),
+(112, 'VQP'),
+(113, 'Valeria Barouch, VQP'),
+(114, 'Verilme'),
+(115, 'Yitzik'),
+(116, 'Yitzik, Tamas Ferencz'),
+(117, 'Yitzik, VQP'),
+(118, 'Ánweg'),
+(119, 'Ицхак Пензев (Yitzik Penzev)');
