@@ -34,6 +34,8 @@ my $doc_uid = 0;
 my $type_uid = 1;
 my $form_uid = 1;
 my $gloss_uid = 1;
+my $ngloss_uid = 1;
+my $created_uid = 1;
 my $linked_uid = 1;
 my $example_uid = 1;
 my $rule_uid = 1;
@@ -45,6 +47,8 @@ my @source_rows = ();
 my @doc_rows = ();
 my @form_rows = ();
 my @gloss_rows = ();
+my @ngloss_rows = ();
+my @created_rows = ();
 my @type_rows = ();
 my @srcdoc_rows = ();
 my @entrydoc_rows = ();
@@ -62,6 +66,8 @@ my @example_rows = ();
 
 my @raw_forms = ();
 my @raw_glosses = ();
+my @raw_nglosses = ();
+my @raw_created = ();
 my @raw_sourcetypes = ();
 my @raw_grammarforms = ();
 
@@ -71,19 +77,23 @@ my @otherlangs;
 my %langshashbykey;
 my %catshashbykey;
 my %sourceshashbykey;
+my %createdhashbykey;
 my %typeshashbykey;
 my %grammarshashbykey;
 my %formshashbykey;
 my %glosseshashbykey;
+my %nglosseshashbykey;
 
 my %entrieshashbyvalue;
 my %langshashbyvalue;
 my %catshashbyvalue;
 my %sourceshashbyvalue;
+my %createdhashbyvalue;
 my %typeshashbyvalue;
 my %grammarshashbyvalue;
 my %formshashbyvalue;
 my %glosseshashbyvalue;
+my %nglosseshashbyvalue;
 
 my $counter = 0;
 
@@ -124,9 +134,11 @@ sub harvest{
 	hashgrammar();       # % = GRAMMAR (speech, inflect, class ...)
 	hashlangs();         # % = mnemonic => UID  / does also language_doc & doc (partly)
 	hashcats();          # % = id => UID
+	hashcreated();       # % = txt => UID
 	hashsources();       # % = prefix => UID / does also source_doc & doc (partly)
 	hashforms();         # % = form-txt => UID
 	hashglosses();       # % = txt => UID
+	hashnglosses();      # % = txt => UID
 	say "   Harvesting stage done.";
 }
 
@@ -149,7 +161,7 @@ sub hashtypes{
    print "   => types ...";
    no warnings 'syntax';
    # first do the hardcoded rows type_uid for parents starts with 1; for hardcoded
-   # types it is set to with 1000
+   # types it is set to start with 1000
    harvesthardcodedtypes();
    # type_uid is now set to 2000 for harvested types
 	foreach my $source ($root->children('source')){ push @raw_sourcetypes, $source->att('type') if defined $source->att('type');}
@@ -188,7 +200,7 @@ sub crunchtypes{
 
 # === GRAMMAR ==============================================
 
-# Paul's schema is somewhat ambivalent here, so I discern only two 'grammar'-types: 
+# I don't fully understand Paul's schema on this point so I discern only two 'grammar'-types: 
 # "classformtype" for class->form; and "inflecttype" for class->variant &
 # [inflect|element]->[form|variant]
 sub hashgrammar{  
@@ -255,7 +267,11 @@ sub hashlangs{
 	my %hashbykey;
 	foreach my $lang ($root->children('language')){ harvestlangs($lang, undef); }
 	print '.';
-	foreach my $entry ($root->children('word')){ harvestotherlangs($entry); }
+	foreach my $entry ($root->children('word')){ 
+		print '.' if ($counter % 1000 == 0);
+		harvestotherlangs($entry); 
+		$counter++;
+	}
 	print '.';
 	hashkeytovalue(\%langshashbykey, \%langshashbyvalue);
 	foreach my $otherlang (unique @otherlangs){
@@ -362,11 +378,38 @@ sub harvestcats{
 		   $label = $cat->att('label');
 		   $label =~ s/\'/''/g;
 		   push @cat_rows, "INSERT INTO ".$schema."CAT (ID, LABEL, PARENT_ID) VALUES ($cat_uid, '$label', $parentcat_uid);" ;
-	      print '.' if ($cat_uid % 200 == 0);
+	      print '.' if ($cat_uid % 30 == 0);
 			$cat_uid++;
 		}
 		$parentcat_uid++;
 	}
+}
+
+# === CREATED ===============================================
+
+sub hashcreated{
+   print "   => created (by) ...";  
+	foreach my $word ($root->children('word')){harvestcreated($word);}
+	foreach my $created (sort(unique(@raw_created))){
+		if ($created ne '') {
+         $createdhashbykey {$created_uid} = $created; 
+         push @created_rows, "INSERT INTO ".$schema."CREATED (ID, TXT) VALUES ($created_uid, '$created');";
+         print '.' if ($created_uid % 30 == 0);
+         $created_uid++;
+		}
+	}
+	undef @raw_created;
+	sayhashkeytovalue(\%createdhashbykey, \%createdhashbyvalue);
+	undef %createdhashbykey;
+	writesql(\@created_rows, 'created.sql') if $mode eq "-s";  # table CREATED
+	undef @created_rows;
+	say " done.";
+}
+
+sub harvestcreated{
+	my ($entry) = @_;
+	push @raw_created, $entry->att('created') if (defined $entry->att('created'));
+	foreach my $subentry ($entry->children('word')){ harvestcreated($subentry); }
 }
 
 # === SOURCE ===============================================
@@ -419,7 +462,7 @@ sub hashforms{
 		if ($form ne '') {
          push @form_rows, "INSERT INTO ".$schema."FORM (ID, TXT) VALUES ($form_uid, '$form');";
          $formshashbykey {$form_uid} = $form;
-         print '.' if ($form_uid % 10000 == 0);
+         print '.' if ($form_uid % 5000 == 0);
          $form_uid++;
       }
 	}
@@ -433,7 +476,7 @@ sub hashforms{
 
 sub harvestforms{
 	my ($entry) = @_;
-	print '.' if ($counter % 1400 == 0);
+	print '.' if ($counter % 1000 == 0);
 	$counter++;
 	pushform($entry->att('v'));
 	pushform($entry->att('rule'));
@@ -529,6 +572,36 @@ sub harvestglosses{
 	foreach my $subentry ($entry->children('word')){ harvestglosses($subentry); }
 }
 
+# === NGLOSS ============================================
+
+sub hashnglosses{
+   print "   => nglosses ...";  
+	foreach my $word ($root->children('word')){harvestnglosses($word);}
+	foreach my $ngloss (sort(unique(@raw_nglosses))){
+		if ($ngloss ne '') {
+         $nglosseshashbykey {$ngloss_uid} = $ngloss; 
+         push @ngloss_rows, "INSERT INTO ".$schema."NGLOSS (ID, LANGUAGE_ID, TXT) VALUES ($ngloss_uid, 1010, '$ngloss');";
+         print '.' if ($ngloss_uid % 50 == 0);
+         $ngloss_uid++;
+		}
+	}
+	undef @raw_nglosses;
+	sayhashkeytovalue(\%nglosseshashbykey, \%nglosseshashbyvalue);
+	undef %nglosseshashbykey;
+	writesql(\@ngloss_rows, 'ngloss.sql') if $mode eq "-s";  # table NGLOSS
+	undef @ngloss_rows;
+	say " done.";
+}
+
+sub harvestnglosses{
+	my ($entry) = @_;
+	push @raw_nglosses, $entry->att('ngloss') if (defined $entry->att('ngloss'));
+	foreach my $ref ($entry->children('ref')){
+		push @raw_nglosses, $ref->att('ngloss') if (defined $ref->att('ngloss'));
+	}
+	foreach my $subentry ($entry->children('word')){ harvestnglosses($subentry); }
+}
+
 # === END HARVESTING =============================================
 
 # === PARSING =============================================
@@ -543,18 +616,21 @@ sub parseword{
 	my $entry_form_uid = ($formshashbyvalue{$entry->att('v')} // 'X');
 	my $entry_lang_uid = ($langshashbyvalue{$entry->att('l')} // 'X');
 	my $entry_gloss_uid = ($glosseshashbyvalue{$entry->att('gloss')} // 'NULL');
+	my $entry_ngloss_uid = ($nglosseshashbyvalue{$entry->att('ngloss')} // 'NULL');
 	my $entry_cat_uid = ($catshashbyvalue{$entry->att('cat')} // 'NULL');
+	my $entry_created_uid = ($createdhashbyvalue{$entry->att('created')} // 'NULL');
 	my $entry_ruleform_uid = ($formshashbyvalue{$entry->att('rule')} // 'NULL');
 	my $entry_stemform_uid = ($formshashbyvalue{$entry->att('stem')} // 'NULL');
 	my $entry_fromform_uid = ($formshashbyvalue{$entry->att('from')} // 'NULL');
 	my $entry_orthoform_uid = ($formshashbyvalue{$entry->att('orthography')} // 'NULL');
 	my $entry_tengwar = $entry->att('tengwar') // "";
 	my $entry_mark = $entry->att('mark') // "";
+	my $entry_neoversion = $entry->att('neo-version') // "";
 	my $entry_orderfield = $entry->att('order') // "";
 	my $entry_eldamopageid = $entry->att('page-id') // "";
 	my $entrytype_uid = entrytype($entry->att('speech') // 'unknown');
 	$parent_uid = $parent_uid // 'NULL';
-	push @entry_rows, "INSERT INTO ".$schema."ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, CAT_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_cat_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid);";
+	push @entry_rows, "INSERT INTO ".$schema."ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_created_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid);";
 	
 	$ordering = 1;
 	foreach my $speeches ($entry->att('speech')){
