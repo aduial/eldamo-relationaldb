@@ -43,50 +43,31 @@ my $example_uid   = 1;
 my $rule_uid      = 1;
 my $grammar_uid   = 1;
 
-my $insert_type    = 'INSERT INTO '.$schema.'TYPE (ID, TXT, PARENT_ID) VALUES ';
-my $insert_grammar = 'INSERT INTO '.$schema.'GRAMMAR (ID, TXT) VALUES ';
-my $insert_language =
-  'INSERT INTO '.$schema.'LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ';
-my $insert_language_doc =
-  'INSERT INTO '.$schema.'LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_cat = 'INSERT INTO '.$schema.'CAT (ID, LABEL, PARENT_ID) VALUES ';
-my $insert_created = 'INSERT INTO '.$schema.'CREATED (ID, TXT) VALUES ';
-my $insert_source =
-  'INSERT INTO '.$schema.'SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ';
-my $insert_source_doc =
-  'INSERT INTO '.$schema.'SOURCE_DOC (SOURCE_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_form = 'INSERT INTO '.$schema.'FORM (ID, TXT) VALUES ';
-my $insert_gloss =
-  'INSERT INTO '.$schema.'GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
-my $insert_ngloss =
-  'INSERT INTO '.$schema.'NGLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
-my $insert_entry =
-'INSERT INTO '.$schema.'ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ';
-my $insert_rule =
-'INSERT INTO '.$schema.'RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ';
-my $insert_ref =
-'INSERT INTO '.$schema.'REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID, SOURCE) VALUES ';
-my $insert_entry_doc =
-  'INSERT INTO '.$schema.'ENTRY_DOC (ENTRY_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_doc = 'INSERT INTO '.$schema.'DOC (ID, TXT, DOCTYPE_ID) VALUES ';
-my $insert_entry_grammar =
-'INSERT INTO '.$schema.'LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
-my $insert_linked_grammar =
-'INSERT INTO '.$schema.'LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
-my $insert_reflinked =
-'INSERT INTO '.$schema.'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
-my $insert_linked =
-'INSERT INTO '.$schema.'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
-my $insert_linked_doc =
-  'INSERT INTO '.$schema.'LINKED_DOC (LINKED_ID, DOC_ID, ORDERING) VALUES ';
-my $insert_linkedexample =
-'INSERT INTO '.$schema.'EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
-my $insert_refexample =
-'INSERT INTO '.$schema.'EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
-my $insert_linked_form =
-  'INSERT INTO '.$schema.'LINKED_FORM (LINKED_ID, FORM_ID, ORDERING) VALUES ';
-my $insert_rulesequence =
-'INSERT INTO '.$schema.'RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ';
+my $insert_type;
+my $insert_grammar;
+my $insert_language;
+my $insert_language_doc;
+my $insert_cat;
+my $insert_created;
+my $insert_source;
+my $insert_source_doc;
+my $insert_form;
+my $insert_gloss;
+my $insert_ngloss;
+my $insert_entry;
+my $insert_rule;
+my $insert_ref;
+my $insert_entry_doc;
+my $insert_doc;
+my $insert_entry_grammar;
+my $insert_linked_grammar;
+my $insert_reflinked;
+my $insert_linked;
+my $insert_linked_doc;
+my $insert_linkedexample;
+my $insert_refexample;
+my $insert_linked_form;
+my $insert_rulesequence;
 
 my @lang_rows          = ();
 my @cat_rows           = ();
@@ -118,12 +99,12 @@ my @raw_forms        = ();
 my @raw_glosses      = ();
 my @raw_nglosses     = ();
 my @raw_created      = ();
-my @raw_sourcetypes  = ();
+#my @raw_sourcetypes  = ();
 my @raw_grammarforms = ();
 
-my %entrieshashbykey;
 my @otherlangs;
 my %langshashbykey;
+my %entrieshashbykey;
 my %catshashbykey;
 my %sourceshashbykey;
 my %createdhashbykey;
@@ -133,8 +114,8 @@ my %formshashbykey;
 my %glosseshashbykey;
 my %nglosseshashbykey;
 
-my %entrieshashbyvalue;
 my %langshashbyvalue;
+my %entrieshashbyvalue;
 my %catshashbyvalue;
 my %sourceshashbyvalue;
 my %createdhashbyvalue;
@@ -146,6 +127,23 @@ my %nglosseshashbyvalue;
 
 my $counter = 0;
 
+# hardcoded values, defined below
+my %languages;
+my @parenttypes;
+my @sourcestypes;
+my @doctypes;
+my @linkedtypes;
+my @exampletypes;
+my @eictypes;
+my @reftypes;
+my @doclinktypes;
+my @classformtypes;
+my @classformvarianttypes;
+my @inflecttypes;
+my @inflectvarianttypes;
+my @speechtypes;
+
+
 # create files and dir if needed
 my $SQLFILE;
 eval { make_path($outputdir) };
@@ -155,45 +153,16 @@ if ($@) {
 
 # NOTE the progress indicator moduli aren't representing anything but a visual clue
 
-# some hardcoded values, contained in the schema xml, not the data xml
-my @parenttypes = (
-    'sourcetype',      'doctype', 'linkedtype', 'exampletype',
-    'grammarroletype', 'entrytype'
-);
-my @doctypes = (
-    'notes',      'cite',      'grammar', 'names',
-    'neologisms', 'phonetics', 'phrases', 'roots',
-    'vocabulary', 'words',     'linked'
-);
-
-# my @doctypes = ('notes', 'cite', 'grammar', 'names', 'neologisms', 'phonetics', 'phrases', 'roots', 'vocabulary', 'words', 'before', 'cognate', 'deriv', 'element', 'inflect', 'related');
-my @linkedtypes = (
-    'before',    'change',     'class',      'cognate',
-    'combine',   'correction', 'deprecated', 'deriv',
-    'element',   'inflect',    'related',    'see',
-    'see-notes', 'see-further'
-);
-my @exampletypes =
-  ( 'derivexample', 'inflectexample', 'orderexample', 'refexample' );
-my @grammarroletypes =
-  ( 'speechform', 'inflectform', 'inflectvariant', 'classform',
-    'classvariant' );
-my @entrytypes = (
-    'lexical',    'grammatical',
-    'phonetical', 'root',
-    'unknown',    'private_constr_lex',
-    'common_constr_lex'
-);
-my @langdocs = ( 'notes', 'grammar', 'names', 'phonetics', 'phrases', 'words' );
 
 say "=== start processing ===";
-print "	  Reading XML file $file";
+print "    Reading XML file $file";
 $twig->parsefile($file);
 my $root = $twig->root;
 say " done.";
 
-harvest();     # create ID references
-mainloop();    # the rest
+loadvariables(); # load hardcoded variables (types, languages)
+harvest();       # create ID references
+mainloop();      # the rest
 
 # === HARVESTING =============================================
 
@@ -203,25 +172,26 @@ sub harvest {
 
 # !! REQUIRES <language-cat ... in XML to be changed into <language ... & </language>
     hashtypes();   # % = TYPES
-    hashgrammar(); # % = GRAMMAR (speech, inflect, class ...)
-    hashlangs();   # % = mnemonic => UID	/ does also language_doc & doc (partly)
+    # Grammar is merged with Type
+    # hashgrammar(); # % = GRAMMAR (speech, inflect, class ...)
+    hashlangs();   # % = mnemonic => UID  / does also language_doc & doc (partly)
     hashcats();    # % = id => UID
     hashcreated(); # % = txt => UID
     hashsources(); # % = prefix => UID / does also source_doc & doc (partly)
     hashforms();   # % = form-txt => UID
     hashglosses(); # % = txt => UID
     hashnglosses();    # % = txt => UID
-    say "	Harvesting stage done.";
+    say "   Harvesting stage done.";
 }
 
 sub mainloop {
-    print "	 Start parsing Entry (Ref, Rule, ...) elements ";
+    print "  Start parsing Entry (Ref, Rule, ...) elements ";
     foreach my $entry ( $root->children('word') ) {
         parseword($entry);
         print '.' if ( $entry_uid % 800 == 0 );
     }
     say " done.";
-    print "	  Writing remaining SQL files ...";
+    print "   Writing remaining SQL files ...";
     writemainsql() if $mode eq "-s";
     say " done.";
     say "=== end of processing ===";
@@ -230,40 +200,45 @@ sub mainloop {
 # === TYPE =============================================
 
 sub hashtypes {
-    print "	 => types ...";
+    print "  => types ...";
     no warnings 'syntax';
 
- # first do the hardcoded rows type_uid for parents starts with 1; for hardcoded
- # types it is set to start with 1000
-    harvesthardcodedtypes();
+    crunchtypes( \@parenttypes, undef );
+    sayhashkeytovalue( \%typeshashbykey, \%typeshashbyvalue );
 
-    # type_uid is now set to 2000 for harvested types
-    foreach my $source ( $root->children('source') ) {
-        push @raw_sourcetypes, $source->att('type')
-          if defined $source->att('type');
-    }
-    crunchtypes( [ sort ( unique(@raw_sourcetypes) ) ], 'sourcetype' );
-    undef @raw_sourcetypes;
+    $type_uid = 100;
+    crunchtypes( \@sourcestypes, 'source-type' );
+    $type_uid = 200;
+    crunchtypes( \@doctypes, 'doc-type' );
+    $type_uid = 300;
+    crunchtypes( \@linkedtypes, 'linked-type' );
+    $type_uid = 400;
+    crunchtypes( \@eictypes, 'eic-type' );
+    $type_uid = 500;
+    crunchtypes( \@exampletypes, 'example-type' );
+    $type_uid = 600;
+    crunchtypes( \@reftypes, 'ref-type' );
+    $type_uid = 700;
+    crunchtypes( \@doclinktypes, 'doclink-type' );
+    $type_uid = 1000;
+    crunchtypes( \@classformtypes, 'class-form-type' );
+    $type_uid = 1100;
+    crunchtypes( \@classformvarianttypes, 'class-form-variant-type' );
+    $type_uid = 1200;
+    crunchtypes( \@inflecttypes, 'inflect-type' );
+    $type_uid = 2000;
+    crunchtypes( \@inflectvarianttypes, 'inflect-variant-type' );
+    $type_uid = 2200;
+    crunchtypes( \@speechtypes, 'speech-type' );
 
-#undef typeshashbyvalue; it was used to look up parent id's. Then re-create / say it ...
+# undef typeshashbyvalue; it was used to look up parent id's. 
+# Then flip it into typeshashbykey for futher usage below
     undef %typeshashbyvalue;
     sayhashkeytovalue( \%typeshashbykey, \%typeshashbyvalue );
     writesql( $insert_type, \@type_rows, 'type.sql', '>' ) if $mode eq "-s";    # table TYPE
     undef %typeshashbykey;
     undef @type_rows;
     say " done.";
-}
-
-sub harvesthardcodedtypes {
-    crunchtypes( \@parenttypes, undef );
-    $type_uid = 1000;
-    hashkeytovalue( \%typeshashbykey, \%typeshashbyvalue );
-    crunchtypes( \@doctypes,         'doctype' );
-    crunchtypes( \@linkedtypes,      'linkedtype' );
-    crunchtypes( \@exampletypes,     'exampletype' );
-    crunchtypes( \@grammarroletypes, 'grammarroletype' );
-    crunchtypes( \@entrytypes,       'entrytype' );
-    $type_uid = 2000;
 }
 
 sub crunchtypes {
@@ -277,58 +252,9 @@ sub crunchtypes {
     }
 }
 
+/*
 # === GRAMMAR ==============================================
-
-# I don't fully understand Paul's schema on this point so I discern only two 'grammar'-types:
-# "classformtype" for class->form; and "inflecttype" for class->variant &
-# [inflect|element]->[form|variant]
-sub hashgrammar {
-    print "	 => grammar ";
-    foreach my $word ( $root->children('word') ) { harvestgrammar($word); }
-
-    # - this has to change, use grammar, not linked
-    crunchgrammar( [ sort ( unique(@raw_grammarforms) ) ] );
-    undef @raw_grammarforms;
-    sayhashkeytovalue( \%grammarshashbykey, \%grammarshashbyvalue );
-    writesql( $insert_grammar, \@grammar_rows, 'grammar.sql', '>' ) if $mode eq "-s";    # table GRAMMAR
-    undef %grammarshashbykey;
-    undef @grammar_rows;
-    say " done.";
-}
-
-sub crunchgrammar {
-    my ($grammararray) = @_;
-    foreach my $grammarstring (@$grammararray) {
-        $grammarshashbykey{$grammar_uid} = $grammarstring;
-        push @grammar_rows, "($grammar_uid, '$grammarstring')";
-        $grammar_uid++;
-    }
-}
-
-sub harvestgrammar {
-    my ($entry) = @_;
-    print '.' if ( $counter % 1500 == 0 );
-    $counter++;
-
-    # speech
-    blobl( \@raw_grammarforms, $entry->att('speech') )
-      if defined $entry->att('speech');
-
-    # inflects & elements for entry
-    inflectsandelements($entry);
-
-    # inflects & elements for ref
-    foreach my $ref ( $entry->children('ref') ) { inflectsandelements($ref); }
-
-    # class form & variant for entry
-    foreach my $class ( $entry->children('class') ) {
-        blobl( \@raw_grammarforms, $class->att('form') )
-          if defined $class->att('form');
-        blobl( \@raw_grammarforms, $class->att('variant') )
-          if defined $class->att('variant');
-    }
-    foreach my $child ( $entry->children('word') ) { harvestgrammar($child); }
-}
+# just keeping this as an example for now
 
 sub inflectsandelements {
     my ($element) = @_;
@@ -352,118 +278,78 @@ sub blobl {
     my ( $bogloe, $kabloobl ) = @_;
     foreach my $globl ( split( ' ', $kabloobl ) ) { push @$bogloe, $globl; }
 }
+*/
 
 # === LANGUAGE =================================================
+# harvesting removed, using hardcoded language from eldamo schema
 
 sub hashlangs {
-    print "	 => languages ";
-    my %hashbykey;
-    foreach my $lang ( $root->children('language') ) {
-        harvestlangs( $lang, undef );
-    }
-    print '.';
-    foreach my $entry ( $root->children('word') ) {
-        print '.' if ( $counter % 1000 == 0 );
-        harvestotherlangs($entry);
+    print "  => languages ";
+
+    foreach my $language ( sort { $a <=> $b } keys %languages ) {
+        print '.' if ( $counter % 6 == 0 );
+        push @lang_rows, "($language, '$languages{$language}{name}', '$languages{$language}{lang}', $languages{$language}{parent})";
+
+        say encode_utf8(
+            "loaded $languages{$language}{lang} - $languages{$language}{name}")
+          if $mode eq "-h";
+
+        $langshashbykey{$language} = '$languages{$language}{lang}';
         $counter++;
     }
-    print '.';
-    hashkeytovalue( \%langshashbykey, \%langshashbyvalue );
-    foreach my $otherlang ( unique @otherlangs ) {
-        if ( !exists( $langshashbyvalue{$otherlang} ) ) {
-            $langshashbyvalue{$otherlang} = $lang_uid;
-            push @lang_rows, "($lang_uid, '$otherlang', '$otherlang', NULL)";
-            $lang_uid++;
-        }
-    }
-    print '.';
 
-    # write retrieved languages to file
-    writesql( $insert_language, \@lang_rows, 'language.sql', '>' ) if $mode eq "-s";    # table LANGUAGE
-                           # re-use lang_rows for hard-coded lines
-    undef @lang_rows;
-    push @lang_rows, "(0, 'Not defined', 'n/a', NULL)";
-    push @lang_rows, "(1, 'All Languages', 'all', 1)";
-    push @lang_rows, "(1001, 'All Languages', 'ALL', 1001)";
-    push @lang_rows, "(1000, 'Modern languages', 'ML', NULL)";
-    push @lang_rows, "(1010, 'English', 'ENG', 1000)";
-    push @lang_rows, "(1011, 'Čeština (Czech)', 'CZE', 1000)";
-    push @lang_rows, "(1012, 'Dansk (Danish)', 'DAN', 1000)";
-    push @lang_rows, "(1013, 'Deutsch (German)', 'GER', 1000)";
-    push @lang_rows, "(1014, 'Nederlands (Dutch)', 'DUT', 1000)";
-    push @lang_rows, "(1015, 'Français (French)', 'FRA', 1000)";
-    push @lang_rows, "(1016, 'Italiano (Italian)', 'ITA', 1000)";
-    push @lang_rows, "(1017, 'Norsk (Norwegian)', 'NOR', 1000)";
-    push @lang_rows, "(1018, 'Nynorsk (Nynorsk Norwegian)', 'NNO', 1000)";
-    push @lang_rows, "(1019, 'Bokmal (Bokmal Norwegian)', 'NOB', 1000)";
-    push @lang_rows, "(1020, 'Polskie (Polish)', 'POL', 1000)";
-    push @lang_rows, "(1021, 'Português (Portuguese)', 'POR', 1000)";
-    push @lang_rows, "(1022, 'Română (Romanian)', 'RUM', 1000)";
-    push @lang_rows, "(1023, 'Русский (Russian)', 'RUS', 1000)";
-    push @lang_rows, "(1024, 'Slovenský (Slovak)', 'SLO', 1000)";
-    push @lang_rows, "(1025, 'Slovenščina (Slovenian)', 'SLV', 1000)";
-    push @lang_rows, "(1026, 'Español (Spanish)', 'SPA', 1000)";
-    push @lang_rows, "(1027, 'Српски (Serbian)', 'SRP', 1000)";
-    push @lang_rows, "(1028, 'Swedish (Svenska)', 'SWE', 1000)";
-    push @lang_rows, "(1029, 'Türk (Turkish)', 'TUR', 1000)";
-    push @lang_rows, "(1030, 'Cymraeg (Welsh)', 'WEL', 1000)";
-    sayhash( \%langshashbykey ) if $mode eq "-h";
-    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>>' ) if $mode eq "-s"; # table LANGUAGE
-    writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' ) if $mode eq "-s"; # table LANGUAGE_DOC
-    undef %langshashbykey;
+    # flip hash to by value
+    sayhashkeytovalue( \%langshashbykey, \%langshashbyvalue );
+
+    # iterate over all language elements in Eldamo to retrieve documentation
+    foreach my $doclang ( $root->children('language') ) {
+        harvestlangdocs($doclang);
+    }
+
+    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>>' )
+      if $mode eq "-s";    # table LANGUAGE
+    writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' )
+      if $mode eq "-s";    # table LANGUAGE_DOC
+                           #undef %langshashbykey;
     undef @lang_rows;
     say " done.";
 }
 
-sub harvestlangs {
-    my ( $lang, $parent_uid ) = @_;
-    foreach my $langdoctype (@langdocs) {
-        crunchlangdocs( $lang, $langdoctype );
-    }                      # see above
-    $langshashbykey{$lang_uid} = $lang->att('id')
-      if ( defined $lang->att('id') );
-    push @lang_rows,
-        "($lang_uid, '"
-      . ( defined $lang->att('name') ? $lang->att('name') : "NULL" ) . "', "
-      . ( defined $lang->att('id') ? "'" . $lang->att('id') . "'" : "NULL" )
-      . ", "
-      . ( defined $parent_uid ? $parent_uid : "NULL" ) . ")";
-
-    $parent_uid = $lang_uid;
-    $lang_uid++;
-    foreach my $sublang ( $lang->children('language') ) {
-        harvestlangs( $sublang, $parent_uid );
+# find documentation of all doctypes under the given language 
+sub harvestlangdocs {
+    my ( $doclang ) = @_;
+    $lang_uid = $langshashbyvalue($doclang->att('id')) if (defined $lang->att('id'));
+    # for every doctype in the hardcoded doctype list: 
+    foreach my $doctype (@docstypes) {
+        crunchlangdocs( $doclang, $doctype );
+    }                     
+    foreach my $subdoclang ( $doclang->children('language') ) {
+        harvestlangdocs( $subdoclang );
     }
-}
+} 
 
 sub crunchlangdocs {
-    my ( $lang, $langdoctype ) = @_;
+    my ( $doclang, $doctype ) = @_;
     my $ordering = 1;
-    foreach my $langdoc ( $lang->children($langdoctype) ) {
-        parselangdoc( $langdoc, $langdoctype, $ordering );
+    # for every doc of type $doctype found under $doclang
+    foreach my $langdoc ( $doclang->children($doctype) ) {
+        parselangdoc( $langdoc, $doctype, $ordering );
         $ordering++;
     }
 }
 
-#lang_uid, doc_uid in context
+# add the doc to the docs table, create row for langId, docId, ordering
 sub parselangdoc {
-    my ( $doc, $langdoctype, $ordering ) = @_;
-    parsedoc( $doc, $langdoctype );    # <- doc_uid gets set here
+    my ( $langdoc, $doctype, $ordering ) = @_;
+    parsedoc( $langdoc, $doctype );    # <- doc_uid gets set here
+    # lang_uid is set globally in calling harvestlangdocs
     push @langdoc_rows, "($lang_uid, $doc_uid, $ordering)";
-}
-
-sub harvestotherlangs {
-    my ($element) = @_;
-    push @otherlangs, $element->att('l') if ( defined $element->att('l') );
-    foreach my $subelement ( $element->children ) {
-        harvestotherlangs($subelement);
-    }
 }
 
 # === CATEGORY ===============================================
 
 sub hashcats {
-    print "	 => categories ";
+    print "  => categories ";
     foreach my $cats ( $root->children('cats') ) { harvestcats($cats); }
     sayhashkeytovalue( \%catshashbykey, \%catshashbyvalue );
     writesql( $insert_cat, \@cat_rows, 'cat.sql', '>' ) if $mode eq "-s"; # table CAT
@@ -495,7 +381,7 @@ sub harvestcats {
 # === CREATED ===============================================
 
 sub hashcreated {
-    print "	 => created (by) ...";
+    print "  => created (by) ...";
     foreach my $word ( $root->children('word') ) { harvestcreated($word); }
     foreach my $created ( sort( unique(@raw_created) ) ) {
         if ( $created ne '' ) {
@@ -525,7 +411,7 @@ sub harvestcreated {
 # === SOURCE ===============================================
 
 sub hashsources {
-    print "	 => sources ";
+    print "  => sources ";
     foreach my $source ( $root->children('source') ) {
         harvestsources($source);
     }
@@ -576,7 +462,7 @@ sub parsesourcedoc {
 # === FORM =============================================
 
 sub hashforms {
-    print "	 => forms ";
+    print "  => forms ";
     foreach my $word ( $root->children('word') ) { harvestforms($word); }
     foreach my $form ( sort ( unique(@raw_forms) ) ) {
         if ( $form ne '' ) {
@@ -689,7 +575,7 @@ sub pushform {
 # === GLOSS ============================================
 
 sub hashglosses {
-    print "	 => glosses ...";
+    print "  => glosses ...";
     foreach my $word ( $root->children('word') ) { harvestglosses($word); }
     foreach my $gloss ( sort( unique(@raw_glosses) ) ) {
         if ( $gloss ne '' ) {
@@ -721,7 +607,7 @@ sub harvestglosses {
 # === NGLOSS ============================================
 
 sub hashnglosses {
-    print "	 => nglosses ...";
+    print "  => nglosses ...";
     foreach my $word ( $root->children('word') ) { harvestnglosses($word); }
     foreach my $ngloss ( sort( unique(@raw_nglosses) ) ) {
         if ( $ngloss ne '' ) {
@@ -1057,12 +943,10 @@ sub parselinked {
     my $linked_source = $linked->att('source') // "";
     my $ordex_ordering = 1;
     
-#    TODO - this was apparently changed. The order examples occur in BEFORE
-#    elements of phonetic rules and in other RULES, dismiss for the time being
-#    foreach my $orderexample ( $linked->children('order') ) {
-#        parseexample( $orderexample, $ordex_ordering, 2 );
-#        $ordex_ordering++;
-#    }
+    foreach my $orderexample ( $linked->children('order-example') ) {
+        parseexample( $orderexample, $ordex_ordering, 2 );
+        $ordex_ordering++;
+    }
 
     parselinkedform( $linked->att('v'),  1 ) if ( defined $linked->att('v') );
     parselinkedform( $linked->att('i1'), 2 ) if ( defined $linked->att('i1') );
@@ -1189,7 +1073,7 @@ sub parseruleseqrow {
 }
 
 # === UTILS =================================================
-
+# flips key<->value
 sub sayhashkeytovalue {
     my $hashedbykey   = $_[0];
     my $hashedbyvalue = $_[1];
@@ -1200,6 +1084,7 @@ sub sayhashkeytovalue {
     }
 }
 
+/*
 sub hashkeytovalue {
     my $hashedbykey   = $_[0];
     my $hashedbyvalue = $_[1];
@@ -1207,6 +1092,7 @@ sub hashkeytovalue {
         $$hashedbyvalue{$value} = $key;
     }
 }
+*/
 
 sub sayhash {
     my $hashed = $_[0];
@@ -1233,7 +1119,6 @@ sub writesql {
     foreach my $arrayrow (@$arrayed) {
         if ( $rows % 1000 == 0 ) {
             say SQLFILE encode_utf8( $arrayrow . ";" );
-            say SQLFILE encode_utf8("COMMIT;");
             say SQLFILE encode_utf8($insertinto) if ( $arraysize % 1000 != 0 );
         }
         else {
@@ -1261,7 +1146,6 @@ sub writesql_no_encode {
     foreach my $arrayrow (@$arrayed) {
         if ( $rows % 1000 == 0 ) {
             say SQLFILE $arrayrow . ";";
-            say SQLFILE "COMMIT;";
             say SQLFILE $insertinto if ( $arraysize % 1000 != 0 );
         } else {
           if ( $rows == $arraysize ) {
@@ -1275,16 +1159,7 @@ sub writesql_no_encode {
     close SQLFILE;
 }
 
-# sub writesql_no_encode {
-#     my $arrayed  = $_[0];
-#     my $filename = $_[1];
-#
-#     # append to previously written rows above (>> instead of >)
-#     open( SQLFILE, ">>", $outputdir . $filename )
-#       or die "$! error trying to create or overwrite $SQLFILE";
-#     foreach my $arrayrow (@$arrayed) { say SQLFILE $arrayrow; }
-#     close SQLFILE;
-# }
+
 
 # === FINALLY =================================================
 
@@ -1299,8 +1174,8 @@ sub writemainsql {
     writesql( $insert_linked, \@linked_rows, 'linked.sql', '>' );
     writesql( $insert_reflinked, \@reflinked_rows, 'linked.sql', '>>' );
     # TODO see comment above about changes in the schema re. BEFORE examples and RULES
-#    writesql( $insert_linkedexample, \@linkedexample_rows, 'example.sql', '>' );
-    writesql( $insert_refexample, \@refexample_rows, 'example.sql', '>>' );
+    writesql( $insert_linkedexample, \@linkedexample_rows, 'linkedexample.sql', '>' );
+    writesql( $insert_refexample, \@refexample_rows, 'refexample.sql', '>>' );
     writesql( $insert_linked_form, \@linkedform_rows, 'linked_form.sql', '>' );
     writesql( $insert_rulesequence, \@rulesequence_rows, 'rulesequence.sql', '>' );
     writesql( $insert_linked_doc, \@linkeddoc_rows, 'linked_doc.sql', '>' );
@@ -1315,45 +1190,764 @@ sub entrytype {
 }
 
 
+sub loadvariables {
 
+	 %languages = (
+		  0 => {
+				parent => 0,
+				lang   => "ROOT",
+				name   => "ROOT",
+		  },
+		  1 => {
+				parent => 0,
+				lang   => "all",
+				name   => "Eldarin Languages",
+		  },
+		  2 => {
+				parent => 1,
+				lang   => "neo",
+				name   => "Combined (Neo) Languages",
+		  },
+		  3 => {
+				parent => 1,
+				lang   => "late",
+				name   => "Late Period (1950-1973)",
+		  },
+		  4 => {
+				parent => 1,
+				lang   => "middle",
+				name   => "Middle Period (1930-1950)",
+		  },
+		  6 => {
+				parent => 1,
+				lang   => "early",
+				name   => "Early Period (1910-1930)",
+		  },
+		  7 => {
+				parent => 1,
+				lang   => "ws",
+				name   => "Writing Systems",
+		  },
+		  10 => {
+				parent => 0,
+				lang   => "AML",
+				name   => "Active modern Languages",
+		  },
+		  11 => {
+				parent => 0,
+				lang   => "IML",
+				name   => "Inactive	modern Languages",
+		  },
+		  20 => {
+				parent => 2,
+				lang   => "np",
+				name   => "Neo-Primitive Elvish",
+		  },
+		  21 => {
+				parent => 2,
+				lang   => "nq",
+				name   => "Neo-Quenya",
+		  },
+		  22 => {
+				parent => 2,
+				lang   => "ns",
+				name   => "Neo-Sindarin",
+		  },
+		  30 => {
+				parent => 3,
+				lang   => "p",
+				name   => "Primitive Elvish",
+		  },
+		  31 => {
+				parent => 3,
+				lang   => "man",
+				name   => "Mannish Languages",
+		  },
+		  32 => {
+				parent => 3,
+				lang   => "oth",
+				name   => "Other Languages",
+		  },
+		  40 => {
+				parent => 4,
+				lang   => "mp",
+				name   => "Middle Primitive Elvish",
+		  },
+		  50 => {
+				parent => 5,
+				lang   => "ep",
+				name   => "Early Primitive Elvish",
+		  },
+		  60 => {
+				parent => 6,
+				lang   => "teng",
+				name   => "Tengwar",
+		  },
+		  61 => {
+				parent => 6,
+				lang   => "cir",
+				name   => "Cirth",
+		  },
+		  62 => {
+				parent => 6,
+				lang   => "sar",
+				name   => "Sarati",
+		  },
+		  63 => {
+				parent => 6,
+				lang   => "un",
+				name   => "Unknown",
+		  },
+		  100 => {
+				parent => 10,
+				lang   => "ENG",
+				name   => "English",
+		  },
+		  101 => {
+				parent => 10,
+				lang   => "GER",
+				name   => "Deutsch",
+		  },
+		  102 => {
+				parent => 11,
+				lang   => "NOB",
+				name   => "Bokmal",
+		  },
+		  103 => {
+				parent => 11,
+				lang   => "FRA",
+				name   => "Français",
+		  },
+		  104 => {
+				parent => 11,
+				lang   => "CZE",
+				name   => "Čeština",
+		  },
+		  105 => {
+				parent => 11,
+				lang   => "WEL",
+				name   => "Cymraeg",
+		  },
+		  106 => {
+				parent => 11,
+				lang   => "DAN",
+				name   => "Dansk",
+		  },
+		  107 => {
+				parent => 11,
+				lang   => "SPA",
+				name   => "Español",
+		  },
+		  108 => {
+				parent => 11,
+				lang   => "ITA",
+				name   => "Italiano",
+		  },
+		  109 => {
+				parent => 11,
+				lang   => "DUT",
+				name   => "Nederlands",
+		  },
+		  110 => {
+				parent => 11,
+				lang   => "NOR",
+				name   => "Norsk",
+		  },
+		  111 => {
+				parent => 11,
+				lang   => "NNO",
+				name   => "Nynorsk",
+		  },
+		  112 => {
+				parent => 11,
+				lang   => "POL",
+				name   => "Polskie",
+		  },
+		  113 => {
+				parent => 11,
+				lang   => "POR",
+				name   => "Português",
+		  },
+		  114 => {
+				parent => 11,
+				lang   => "RUM",
+				name   => "Română",
+		  },
+		  115 => {
+				parent => 11,
+				lang   => "SLV",
+				name   => "Slovenščina",
+		  },
+		  116 => {
+				parent => 11,
+				lang   => "SLO",
+				name   => "Slovenský",
+		  },
+		  117 => {
+				parent => 11,
+				lang   => "SWE",
+				name   => "Swedish",
+		  },
+		  118 => {
+				parent => 11,
+				lang   => "TUR",
+				name   => "Türk",
+		  },
+		  119 => {
+				parent => 11,
+				lang   => "RUS",
+				name   => "Русский",
+		  },
+		  120 => {
+				parent => 11,
+				lang   => "SRP",
+				name   => "Српски",
+		  },
+		  300 => {
+				parent => 30,
+				lang   => "aq",
+				name   => "Ancient Quenya",
+		  },
+		  301 => {
+				parent => 30,
+				lang   => "at",
+				name   => "Ancient Telerin",
+		  },
+		  302 => {
+				parent => 30,
+				lang   => "av",
+				name   => "Avarin",
+		  },
+		  310 => {
+				parent => 31,
+				lang   => "ed",
+				name   => "Edain",
+		  },
+		  311 => {
+				parent => 31,
+				lang   => "roh",
+				name   => "Rohirric",
+		  },
+		  312 => {
+				parent => 31,
+				lang   => "wos",
+				name   => "Wose",
+		  },
+		  313 => {
+				parent => 31,
+				lang   => "dun",
+				name   => "Dunlending",
+		  },
+		  314 => {
+				parent => 31,
+				lang   => "eas",
+				name   => "Easterling",
+		  },
+		  320 => {
+				parent => 32,
+				lang   => "val",
+				name   => "Valarin",
+		  },
+		  321 => {
+				parent => 32,
+				lang   => "ent",
+				name   => "Entish",
+		  },
+		  322 => {
+				parent => 32,
+				lang   => "kh",
+				name   => "Khuzdul",
+		  },
+		  323 => {
+				parent => 32,
+				lang   => "khx",
+				name   => "Khuzdhul, External",
+		  },
+		  324 => {
+				parent => 32,
+				lang   => "bs",
+				name   => "Black Speech",
+		  },
+		  400 => {
+				parent => 40,
+				lang   => "maq",
+				name   => "Middle Ancient Quenya",
+		  },
+		  401 => {
+				parent => 40,
+				lang   => "on",
+				name   => "Old Noldorin",
+		  },
+		  402 => {
+				parent => 40,
+				lang   => "mt",
+				name   => "Middle Telerin",
+		  },
+		  403 => {
+				parent => 40,
+				lang   => "ilk",
+				name   => "Ilkorin",
+		  },
+		  404 => {
+				parent => 40,
+				lang   => "dor",
+				name   => "Doriathrin",
+		  },
+		  405 => {
+				parent => 40,
+				lang   => "dor ilk",
+				name   => "Doriathrin/Ilkorin",
+		  },
+		  406 => {
+				parent => 40,
+				lang   => "fal",
+				name   => "Falathrin",
+		  },
+		  407 => {
+				parent => 40,
+				lang   => "bel",
+				name   => "Beleriand(r)ic",
+		  },
+		  408 => {
+				parent => 40,
+				lang   => "dan",
+				name   => "Danian",
+		  },
+		  409 => {
+				parent => 40,
+				lang   => "oss",
+				name   => "Ossriandric",
+		  },
+		  410 => {
+				parent => 40,
+				lang   => "edan",
+				name   => "East Danian",
+		  },
+		  411 => {
+				parent => 40,
+				lang   => "lem",
+				name   => "Lemberin",
+		  },
+		  412 => {
+				parent => 40,
+				lang   => "tal",
+				name   => "Taliska",
+		  },
+		  500 => {
+				parent => 50,
+				lang   => "eoq",
+				name   => "Early Old Qenya",
+		  },
+		  501 => {
+				parent => 50,
+				lang   => "g",
+				name   => "Gnomish",
+		  },
+		  502 => {
+				parent => 50,
+				lang   => "eon",
+				name   => "Early Old Noldorin",
+		  },
+		  503 => {
+				parent => 50,
+				lang   => "sol",
+				name   => "Solosimpi",
+		  },
+		  504 => {
+				parent => 50,
+				lang   => "et",
+				name   => "Early Telerin",
+		  },
+		  505 => {
+				parent => 50,
+				lang   => "eilk",
+				name   => "Early Ilkorin",
+		  },
+		  3000 => {
+				parent => 300,
+				lang   => "q",
+				name   => "Quenya",
+		  },
+		  3001 => {
+				parent => 300,
+				lang   => "van",
+				name   => "Vanyarin",
+		  },
+		  3010 => {
+				parent => 301,
+				lang   => "t",
+				name   => "Telerin",
+		  },
+		  3011 => {
+				parent => 301,
+				lang   => "lon",
+				name   => "Late Old Noldorin",
+		  },
+		  3012 => {
+				parent => 301,
+				lang   => "os",
+				name   => "Old Sindarin",
+		  },
+		  3013 => {
+				parent => 301,
+				lang   => "nan",
+				name   => "Nandorin",
+		  },
+		  3100 => {
+				parent => 310,
+				lang   => "pad",
+				name   => "Primitive Adunaic",
+		  },
+		  4000 => {
+				parent => 400,
+				lang   => "mq",
+				name   => "Middle Quenya",
+		  },
+		  4001 => {
+				parent => 400,
+				lang   => "lin",
+				name   => "Lindarin",
+		  },
+		  4010 => {
+				parent => 401,
+				lang   => "n",
+				name   => "Noldorin",
+		  },
+		  5000 => {
+				parent => 500,
+				lang   => "eq",
+				name   => "Early Quenya",
+		  },
+		  5020 => {
+				parent => 502,
+				lang   => "en",
+				name   => "Early Noldorin",
+		  },
+		  30110 => {
+				parent => 3011,
+				lang   => "ln",
+				name   => "Late Noldorin",
+		  },
+		  30120 => {
+				parent => 3012,
+				lang   => "s",
+				name   => "Sindarin",
+		  },
+		  30121 => {
+				parent => 3012,
+				lang   => "norths",
+				name   => "North Sindarin",
+		  },
+		  31000 => {
+				parent => 3100,
+				lang   => "ad",
+				name   => "Adunaic",
+		  },
+		  310000 => {
+				parent => 31000,
+				lang   => "wes",
+				name   => "Westron",
+		  }
+	 );
 
-# === RECYCLE BIN =================================================
+    # some hardcoded values, contained in the schema xml, not the data xml
+    # === LIST TYPES =================================================
 
+    @parenttypes = (
+        'source-type',             'doc-type',
+        'linked-type',             'example-type',
+        'ref-type',                'class-form-type',
+        'class-form-variant-type', 'inflect-type',
+        'inflect-variant-type',    'speech-type'
+    );
 
-# nb formtype is now 1 = word, 2 = grammar, 3 = phonetic, 4 = root	
-#	 my $lang_id = $langshashbyvalue{$entry->att('l')};
-#	
+    @sourcestypes = (
+        'adunaic',    'appendix',   'index',  'minor',
+        'minor-work', 'neologisms', 'quenya', 'secondary',
+        'sindarin',   'telerin',    'work'
+    );
 
-/*
-	# 1200 is the ID of English
-	if (defined $entry->att('gloss')){
-		my $gloss_id = $gloss_uid;
-		#glossrow($entry->att('gloss'), $gloss_id, 1200);
-		$gloss_uid++;
-	}
-	if (defined $entry->att('cat')){
-		my $cat_id = $catshashbyvalue{$entry->att('cat')};
-	}
-	if (defined $entry->att('tengwar')){
-		my $tengwar = $entry->att('tengwar');
-	}
-	if (defined $entry->att('mark')){
-		my $mark = $entry->att('mark');
-	}
-	if (defined $entry->att('order')){
-		my $order = $entry->att('order');
-	}
-	print "\n";
+	@doctypes = (
+		 'cite',    'deprecations', 'grammar',    'linked',
+		 'names',   'neologisms',   'notes',      'phonetics',
+		 'phrases', 'roots',        'vocabulary', 'words'
+	);
+
+    @linkedtypes = (
+        'before',   'cognate',     'combine',   'deprecated',
+        'deriv',    'element',     'related',   'see',
+        'see-also', 'see-further', 'see-notes', 'word'
+    );
+    
+    @eictypes = ( 'element', 'inflect', 'class' );
+
+    @exampletypes = ( 'deriv', 'inflect', 'order' );
+
+    @reftypes = (
+        'change', 'cognate', 'correction',
+        'deriv',  'example', 'ref',
+        'rule', 'rule-start', 'rule-example');
+        
+    @doclinktypes = (
+        'entry', 'language', 'source' );
+
+    @classformtypes = (
+        'strong-I',           'strong-II',
+        'weak-I',             'weak-II',
+        'neut',               'gendered',
+        'biconsonantal-verb', 'triconsonantal-verb',
+        'derived-verb',       'uniconsonantal-form',
+        'biconsonantal-root', 'triconsonantal-root',
+        'a-verb',             'basic-verb',
+        'irregular-verb',     'na-formative',
+        'non-verb-derived',   'ta-causative',
+        'ta-formative',       'talat-stem',
+        'u-verb',             'weak-verb',
+        'ya-causative',       'ya-formative'
+    );
+
+    @classformvarianttypes = ( 'common', 'fem', 'masc' );
+
+    @inflecttypes = (
+        '?',                            'singular',
+        'dual',                         'plural',
+        'partitive-plural',             'class-plural',
+        'draft-dual',                   'draft-plural',
+        'infinitive',                   'aorist',
+        'present',                      'past',
+        'strong-past',                  'perfect',
+        'strong-perfect',               'future',
+        'gerund',                       'particular-infinitive',
+        'consuetudinal-past',           'present-imperfect',
+        'present-perfect',              'past-continuous',
+        'past-imperfect',               'past-perfect',
+        'past-future',                  'past-future-perfect',
+        'long-perfect',                 'pluperfect',
+        'future-imperfect',             'future-perfect',
+        'future-future',                'continuative-present',
+        'continuative-past',            'draft-perfect',
+        'passive-past',                 'stative',
+        'stative-past',                 'stative-future',
+        'conditional',                  'imperative',
+        'suffixed-imperative',          'subjunctive',
+        'past-subjunctive',             'present-subjective',
+        'impersonal',                   'passive',
+        'reflexive',                    'active-participle',
+        'passive-participle',           'imperfect-participle',
+        'imperfect-passive-participle', 'perfect-participle',
+        'perfect-passive-participle',   'perfective-participle',
+        'future-participle',            'future-passive-participle',
+        'reflexive-participle',         '1st-sg',
+        '1st-dual-exclusive',           '1st-dual-inclusive',
+        '1st-pl',                       '1st-pl-exclusive',
+        '1st-pl-inclusive',             '2nd-sg',
+        '2nd-sg-familiar',              '2nd-sg-polite',
+        '2nd-sg-honorific',             '2nd-dual',
+        '2nd-dual-polite',              '2nd-dual-honorific',
+        '2nd-pl',                       '2nd-pl-polite',
+        '2nd-pl-honorific',             '3rd-sg',
+        '3rd-sg-fem',                   '3rd-sg-masc',
+        '3rd-sg-neut',                  '3rd-sg-reflexive',
+        '3rd-dual',                     '3rd-dual-fem',
+        '3rd-dual-masc',                '3rd-dual-neut',
+        '3rd-pl',                       '3rd-pl-fem',
+        '3rd-pl-masc',                  '3rd-pl-neut',
+        '3rd-pl-reflexive',             'with-sg-object',
+        'with-dual-object',             'with-pl-object',
+        'with-remote-sg-object',        'with-remote-pl-object',
+        'with-1st-sg-object',           'with-1st-pl-object',
+        'with-2nd-sg-object',           'with-2nd-pl-object',
+        'with-1st-sg-dative',           '1st-sg-prep',
+        '1st-dual-prep',                '1st-pl-exclusive-prep',
+        '1st-pl-inclusive-prep',        '2nd-sg-prep',
+        '2nd-sg-familiar-prep',         '2nd-sg-polite-prep',
+        '2nd-pl-prep',                  '3rd-sg-prep',
+        '3rd-sg-inanimate-prep',        '3rd-sg-honorific-prep',
+        '3rd-pl-prep',                  '3rd-pl-honorific-prep',
+        'definite-prep',                'definite-plural-prep',
+        '1st-sg-poss',                  '1st-pl-exclusive-poss',
+        '1st-pl-inclusive-poss',        '2nd-sg-poss',
+        '2nd-sg-polite-poss',           '2nd-dual-poss',
+        '2nd-pl-poss',                  '3rd-sg-poss',
+        '3rd-pl-poss',                  'accusative',
+        'ablative',                     'allative',
+        'dative',                       'genitive',
+        'instrumental',                 'locative',
+        'nominative',                   'possessive',
+        'possessive-adjectival',        's-case',
+        'old-genitive',                 'comitative',
+        'similative',                   'partitive',
+        'objective',                    'subjective',
+        'agental-formation',            'draft-dative',
+        'draft-genitive',               'draft-instrumental',
+        'draft-subjective',             'augmentative',
+        'comparative',                  'diminutive',
+        'intensive',                    'superlative',
+        'diminutive-superlative',       'fem',
+        'masc',                         'neut',
+        'soft-mutation',                'nasal-mutation',
+        'liquid-mutation',              'stop-mutation',
+        'mixed-mutation',               'sibilant-mutation',
+        'i-mutation',                   'a-fortification',
+        'augmentation',                 'consonant-doubling',
+        'extension',                    'full-form',
+        'inversion',                    'nasal-infixion',
+        'nasal-prefixion',              's-fortification',
+        'strengthened',                 'subordinate-vowel-variation',
+        'vocalic-extension',            'vowel-lengthening',
+        'vowel-prefixion',              'vowel-suffixion',
+        'vowel-suppression',            'stem',
+        'assimilated',                  'elided',
+        'shortened',                    'negated',
+        'definite',                     'indefinite',
+        'affix',                        'prefix',
+        'suffix',                       'patronymic',
+        'adjectival',                   'adverbial',
+        'frequentative',                'radical',
+        'complete',                     'glide-consonant',
+        'negative-quasi-participle',    'no-agreement',
+        'agental',                      'root'
+    );
+
+    @inflectvarianttypes = (
+        'b-mutation',                   'c-mutation',
+        'cw-mutation',                  'd-mutation',
+        'dy-mutation',                  'g-mutation',
+        'gw-mutation',                  'h-mutation',
+        'lh-mutation',                  'm-mutation',
+        'mb-mutation',                  'nd-mutation',
+        'ng-mutation',                  'p-mutation',
+        'rh-mutation',                  's-mutation',
+        't-mutation',                   'declension-A',
+        'declension-B',                 'declension-C',
+        'declension-D',                 'fem',
+        'masc',                         'neut',
+        'a-genitive',                   'adj-agreement',
+        'adjectival',                   'adjective-in-objective',
+        'archaic-objective-with-glide', 'archaic-strong-dual',
+        'archaic-dual-with-glide',      'archaic-strong-objective',
+        'archaic-strong-plural',        'archaic-strong-subjective',
+        'assimilated',                  'augmentless',
+        'bare-stem',                    'colloquial-possessive',
+        'dialectical',                  'draft',
+        'er-plural',                    'half-strong-past',
+        'infixed-imperative',           'irregular',
+        'irregular-dual',               'irregular-plural',
+        'irregular-subjective',         'joining-base-vowel',
+        'long-dative',                  'long-imperfect',
+        'n-accusative',                 'na-dative',
+        'no-agreement',                 'o-genitive',
+        'normal-and-subjective',        'object-suffix-only',
+        'objective-with-syncope',       'plural-with-linking-consonant',
+        'possessive-second',            'pronoun-prefix',
+        'prosodic-lengthening',         'r-locative',
+        'root-perfect',                 'short-instrumental',
+        'strong-I-without-syncope',     'strong-past',
+        'strong-perfect',               'suffixed-imperative',
+        'u-dual',                       'weak-past',
+        'weak-perfect'
+    );
+
+    @speechtypes = (
+        '?',               'adj',
+        'adv',             'affix',
+        'article',         'cardinal',
+        'conj',            'collective-name',
+        'collective-noun', 'family-name',
+        'fem-name',        'fraction',
+        'grammar',         'infix',
+        'interj',          'masc-name',
+        'n',               'ordinal',
+        'particle',        'phoneme',
+        'phonetics',       'phonetic-group',
+        'phonetic-rule',   'phrase',
+        'place-name',      'pref',
+        'prep',            'pron',
+        'proper-name',     'radical',
+        'root',            'text',
+        'suf',             'vb'
+    );
+      
+
+    $insert_type =
+      'INSERT INTO ' . $schema . 'TYPE (ID, TXT, PARENT_ID) VALUES ';
+    $insert_grammar = 'INSERT INTO ' . $schema . 'GRAMMAR (ID, TXT) VALUES ';
+    $insert_language =
+        'INSERT INTO '
+      . $schema
+      . 'LANGUAGE (ID, NAME, MNEMONIC, PARENT_ID) VALUES ';
+    $insert_language_doc =
+        'INSERT INTO '
+      . $schema
+      . 'LANGUAGE_DOC (LANGUAGE_ID, DOC_ID, ORDERING) VALUES ';
+    $insert_cat =
+      'INSERT INTO ' . $schema . 'CAT (ID, LABEL, PARENT_ID) VALUES ';
+    $insert_created = 'INSERT INTO ' . $schema . 'CREATED (ID, TXT) VALUES ';
+    $insert_source =
+        'INSERT INTO '
+      . $schema
+      . 'SOURCE (ID, NAME, PREFIX, SOURCETYPE_ID) VALUES ';
+    $insert_source_doc =
+        'INSERT INTO '
+      . $schema
+      . 'SOURCE_DOC (SOURCE_ID, DOC_ID, ORDERING) VALUES ';
+    $insert_form = 'INSERT INTO ' . $schema . 'FORM (ID, TXT) VALUES ';
+    $insert_gloss =
+      'INSERT INTO ' . $schema . 'GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
+    $insert_ngloss =
+      'INSERT INTO ' . $schema . 'NGLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
+    $insert_entry =
+        'INSERT INTO '
+      . $schema
+      . 'ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ORTHO_FORM_ID, PARENT_ID, ORDERING, ENTRYTYPE_ID) VALUES ';
+    $insert_rule =
+        'INSERT INTO '
+      . $schema
+      . 'RULE (ID, ENTRY_ID, FROM_FORM_ID, RULE_FORM_ID, LANGUAGE_ID, ORDERING) VALUES ';
+    $insert_ref =
+        'INSERT INTO '
+      . $schema
+      . 'REF (ID, ENTRY_ID, FORM_ID, GLOSS_ID, LANGUAGE_ID, SOURCE_ID, MARK, RULE_FROMFORM_ID, RULE_RLFORM_ID, RULE_RULEFORM_ID, ORDERING, ENTRYTYPE_ID, SOURCE) VALUES ';
+    $insert_entry_doc =
+        'INSERT INTO '
+      . $schema
+      . 'ENTRY_DOC (ENTRY_ID, DOC_ID, ORDERING) VALUES ';
+    $insert_doc =
+      'INSERT INTO ' . $schema . 'DOC (ID, TXT, DOCTYPE_ID) VALUES ';
+    $insert_entry_grammar =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED_GRAMMAR (ENTRY_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
+    $insert_linked_grammar =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED_GRAMMAR (LINKED_ID, GRAMMAR_ID, ORDERING, GRAMMARTYPE_ID) VALUES ';
+    $insert_reflinked =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, REF_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
+    $insert_linked =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED (ID, LINKEDTYPE_ID, ENTRY_ID, TO_LANGUAGE_ID, ORDERING, SOURCE_ID, MARK, SOURCE) VALUES ';
+    $insert_linked_doc =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED_DOC (LINKED_ID, DOC_ID, ORDERING) VALUES ';
+    $insert_linkedexample =
+        'INSERT INTO '
+      . $schema
+      . 'EXAMPLE (LINKED_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
+    $insert_refexample =
+        'INSERT INTO '
+      . $schema
+      . 'EXAMPLE (REF_ID, SOURCE_ID, FORM_ID, ORDERING, EXAMPLETYPE_ID, SOURCE) VALUES ';
+    $insert_linked_form =
+        'INSERT INTO '
+      . $schema
+      . 'LINKED_FORM (LINKED_ID, FORM_ID, ORDERING) VALUES ';
+    $insert_rulesequence =
+        'INSERT INTO '
+      . $schema
+      . 'RULESEQUENCE (DERIV_ID, FROM_FORM_ID, LANGUAGE_ID, RULE_FORM_ID, STAGE_FORM_ID, ORDERING) VALUES ';
 }
-*/
-
-/*
-foreach my $entry ($root->children('word')){
-	if ($entry->att('v') ne ''){
-		 $entrieshashbykey {$entry_uid} = $entry->att('v');
-		 $entry_uid++;
-	}
-}
-*/
-
-
