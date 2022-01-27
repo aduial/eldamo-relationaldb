@@ -6,6 +6,7 @@ use Array::Utils qw(:all);
 use Acme::Comment type => 'C++';
 use feature 'say';
 use File::Path qw(make_path);
+use Data::Dumper;
 
 $| = 1
   ; # this is required to not have the progress dots printed all at the same time
@@ -28,6 +29,7 @@ my $value;
 
 my $cat_uid       = 100;
 my $created_uid   = 1;
+my $lang_uid      = 1;
 my $source_uid    = 1;
 my $type_uid      = 1;
 my $parentcat_uid = 1;
@@ -176,7 +178,7 @@ sub harvest {
 }
 
 sub mainloop {
-    print "  Start parsing Entry (Ref, Rule, ...) elements ";
+    print "  Start parsing Entries ";
     # language & source docs have been parsed in sub harvest()
     
     foreach my $entry ( $root->children('word') ) {
@@ -193,7 +195,7 @@ sub mainloop {
 # === LOAD type ======================================================
 
 sub hashtype {
-    print "  => type ...";
+    print "  => type ............";
     no warnings 'syntax';
 
     crunchtype( \%parenttypehashkey, \%parenttypehashval, \@parenttype, undef );
@@ -242,11 +244,15 @@ sub hashtype {
 # generate sub-type hash-by-value for later use
 sub crunchtype {
     my ( $typehashkey, $typehashval, $typearray, $parentname ) = @_;
+    
     my $parent_uid =
-      defined $parentname ? $parenttypehashval{$parentname} : "NULL";
-    foreach my $typetring (@$typearray) {
-        $typehashkey{$type_uid} = $typetring;
-        push @type_rows, "($type_uid, '$typetring', $parent_uid)";
+       defined $parentname
+       ? ( $parenttypehashval {$parentname} // "NULL" )
+    : 0;
+    
+    foreach my $typestring (@$typearray) {
+        $$typehashkey{$type_uid} = $typestring;
+        push @type_rows, "($type_uid, '$typestring', $parent_uid)";
         $type_uid++;
     }
     sayhashkeytovalue( $typehashkey, $typehashval );
@@ -265,28 +271,28 @@ sub hashlangs {
         say encode_utf8(
             "loaded $languages{$language}{lang} - $languages{$language}{name}")
           if $mode eq "-h";
-
-        $langhashkey{$language} = '$languages{$language}{lang}';
+          
+        $langhashkey{$language} = $languages{$language}{lang};
         $counter++;
     }
 
     # flip hash to by value
     sayhashkeytovalue( \%langhashkey, \%langhashval );
 
-   # set $arnediadtype_uid to 'language'
-   $arnediadtype_uid = $arnediadtypehashval{'languagenote'};
+    # set $arnediadtype_uid to 'language'
+    $arnediadtype_uid = $arnediadtypehashval{'languagenote'};
 
     # iterate over all language elements in Eldamo to retrieve documentation
     foreach my $doclang ( $root->children('language') ) {
         harvestlangdocs($doclang);
     }
 
-    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>>' )
+    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>' )
       if $mode eq "-s";    # table LANGUAGE
-      # write sql only after all three type of arnediad's have been added
-   # writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' )
-   #   if $mode eq "-s";    # table LANGUAGE_DOC
-                           #undef %langhashkey;
+     # write sql only after all three type of arnediad's have been added
+     # writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' )
+     #   if $mode eq "-s";    # table LANGUAGE_DOC
+     #undef %langhashkey;
     undef @lang_rows;
     say " done.";
 }
@@ -294,10 +300,14 @@ sub hashlangs {
 # find documentation of all doctype under the given language 
 sub harvestlangdocs {
     my ( $doclang ) = @_;
-    $lang_uid = $langhashval($doclang->att('id')) if (defined $lang->att('id'));
+    my $lang_uid =
+       defined $doclang->att('id')
+       ? $langhashval{ $doclang->att('id') } 
+       : 0;
+    
     # for every doctype in the hardcoded doctype list: 
-    foreach my $doctype (@docstype) {
-        crunchlangdocs( $doclang, $doctype );
+    foreach my $doctype (@doctype) {
+        crunchlangdocs( $lang_uid, $doclang, $doctype );
     }                     
     foreach my $subdoclang ( $doclang->children('language') ) {
         harvestlangdocs( $subdoclang );
@@ -305,18 +315,18 @@ sub harvestlangdocs {
 } 
 
 sub crunchlangdocs {
-    my ( $doclang, $doctype ) = @_;
+    my ( $lang_uid, $doclang, $doctype ) = @_;
     $ordering = 1;
     # for every doc of type $doctype found under $doclang
     foreach my $langdoc ( $doclang->children($doctype) ) {
-        parselangdoc( $langdoc, $doctype, $ordering );
+        parselangdoc( $lang_uid, $langdoc, $doctype, $ordering );
         $ordering++;
     }
 }
 
 # add the doc to the docs table, create row for langId, docId, ordering, arnediad_type
 sub parselangdoc {
-    my ( $langdoc, $doctype, $ordering ) = @_;
+    my ( $lang_uid, $langdoc, $doctype, $ordering ) = @_;
     parsedoc( $langdoc, $doctype );    # <- doc_uid gets set here
     # lang_uid is set globally in calling harvestlangdocs
     push @arnediad_rows, "($lang_uid, $doc_uid, $ordering, $arnediadtype_uid)";
@@ -358,12 +368,14 @@ sub harvestcats {
 
 sub hashcreated {
     print "  => created (by) ...";
-    foreach my $word ( $root->children('word') ) { harvestcreated($word); }
+    foreach my $word ( $root->children('word') ) { 
+       harvestcreated($word); 
+    }
     foreach my $created ( sort( unique(@raw_created) ) ) {
         if ( $created ne '' ) {
             $createdhashkey{$created_uid} = $created;
             push @created_rows, "($created_uid, '$created')";
-            print '.' if ( $created_uid % 30 == 0 );
+            print '.' if ( $created_uid % 10 == 0 );
             $created_uid++;
         }
     }
@@ -375,10 +387,19 @@ sub hashcreated {
     say " done.";
 }
 
+sub blobl{
+   my($bogloe, $kabloobl) = @_;
+   foreach my $globl (split(' ', $kabloobl)){ push @$bogloe, $globl;}
+}
+
 sub harvestcreated {
     my ($entry) = @_;
-    push @raw_created, $entry->att('created')
-      if ( defined $entry->att('created') );
+    if ( defined $entry->att('created') ){
+       foreach my $globl (split(',', $entry->att('created'))){ 
+          $globl=~ s/^\s+//;
+          push @raw_created, $globl;
+       }
+    }
     foreach my $subentry ( $entry->children('word') ) {
         harvestcreated($subentry);
     }
@@ -427,7 +448,7 @@ sub harvestsources {
         $ordering++;
     }
     $ordering = 1;
-    print '.' if ( $source_uid % 30 == 0 );
+    print '.' if ( $source_uid % 10 == 0 );
     $source_uid++;
 }
 
@@ -489,7 +510,7 @@ sub process_entrychild {
     my ($parent) = @_;
     
     # these shouldn't add any new forms, but just in case
-    foreach my $before ( $entry->children('before') ) {
+    foreach my $before ( $parent->children('before') ) {
         pushform( $before->att('v') );
         foreach my $orderexample ( $before->children('order-example') ) {
             pushform( $orderexample->att('v') );
@@ -520,13 +541,13 @@ sub process_entrychild {
         pushform( $rule->att('from') );
         pushform( $rule->att('rule') );
     }
-    foreach my $see ( $entry->children('see') ) { 
+    foreach my $see ( $parent->children('see') ) { 
       pushform( $see->att('v') ); 
     }
-    foreach my $seefurther ( $entry->children('see-further') ) {
+    foreach my $seefurther ( $parent->children('see-further') ) {
         pushform( $seefurther->att('v') );
     }
-    foreach my $seenotes ( $entry->children('see-notes') ) {
+    foreach my $seenotes ( $parent->children('see-notes') ) {
         pushform( $seenotes->att('v') );
     }
 }
@@ -579,7 +600,6 @@ sub pushform {
 }
 
 # === HARVEST GLOSSES ============================================
-
 sub hashglosses {
     print "  => glosses ...";
     foreach my $word ( $root->children('word') ) { harvestglosses($word); }
@@ -628,7 +648,9 @@ sub parseword {
     my $entry_gloss_uid     = ( $glosshashval  { $entry->att('gloss') }       // 'NULL' );
     my $entry_ngloss_uid    = ( $glosshashval  { $entry->att('ngloss') }      // 'NULL' );
     my $entry_cat_uid       = ( $cathashval    { $entry->att('cat') }         // 'NULL' );
+    
     my $entry_created_uid   = ( $createdhashval{ $entry->att('created') }     // 'NULL' );
+    
     my $entry_ruleform_uid  = ( $formhashval   { $entry->att('rule') }        // 'NULL' );
     my $entry_stemform_uid  = ( $formhashval   { $entry->att('stem') }        // 'NULL' );
     my $entry_fromform_uid  = ( $formhashval   { $entry->att('from') }        // 'NULL' );
@@ -641,14 +663,9 @@ sub parseword {
     my $entrytype_uid       = entrytype( $entry->att('speech')             // 'unknown' );
        $parent_uid          = $parent_uid                                       // 'NULL';
     
-    push @entry_rows, "($entry_uid,           $entry_form_uid,        $entry_lang_uid, 
-                        $entry_gloss_uid,     $entry_ngloss_uid,      $entry_cat_uid, 
-                        $entry_created_uid,   $entry_ruleform_uid,    $entry_fromform_uid, 
-                        $entry_stemform_uid, '$entry_tengwar',       '$entry_mark', 
-                       '$entry_neoversion',  '$entry_eldamopageid',  '$entry_orderfield', 
-                        $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid)";
+    push @entry_rows, "($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_created_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid)";
 
-   # ==== speech n-m TYPES  / ERNEDIAD ====
+    # ==== speech n-m TYPES  / ERNEDIAD ====
     $ordering = 1;
     foreach my $speeches ( $entry->att('speech') ) {
         foreach my $speech ( split( ' ', $speeches ) ) {
@@ -657,6 +674,20 @@ sub parseword {
               . ( $speechtypehashval{$speech} // 0 )
               . ", $ordering, "
               . ( $arnediadtypehashval{'entryspeechtype'} // 0 ) . ")";
+            $ordering++;
+        }
+    }
+    
+    # ==== created n-m TYPES  / ERNEDIAD ====
+    $ordering = 1;
+    foreach my $creators ( $entry->att('created') ) {
+        foreach my $creator ( split( ',', $creators ) ) {
+            $creator=~ s/^\s+//;
+            push @arnediad_rows,
+                "($entry_uid, "
+              . ( $createdhashval{ $creator } // 0 )
+              . ", $ordering, "
+              . ( $arnediadtypehashval{'created'} // 0 ) . ")";
             $ordering++;
         }
     }
@@ -682,7 +713,7 @@ sub parseword {
     }
     $ordering = 1;
     foreach my $deprecated ( $entry->children('deprecated') ) {
-        parselinked( $combine, $ordering, 'deprecated' )
+        parselinked( $deprecated, $ordering, 'deprecated' )
           ; 
         $ordering++;
     }
@@ -734,19 +765,19 @@ sub parseword {
     # ==== EIC ====
     $ordering = 1;
     foreach my $class ( $entry->children('class') ) {
-        parseeic( $class, $ordering, 'class', 1 )
+        parseeic( $class, $entry_uid, $ordering, 'class', 1 )
           ;    # entry_uid + Grammatical type (2x) + ordering
         $ordering++;
     }
     $ordering = 1;
     foreach my $element ( $entry->children('element') ) {
-        parseeic( $element, $ordering, 'element', 1 )
+        parseeic( $element, $entry_uid, $ordering, 'element', 1 )
           ; # entry_uid + element_v + parent_l + Grammatical type (2x) + ordering
         $ordering++;
     }
     $ordering = 1;
     foreach my $inflect ( $entry->children('inflect') ) {
-        parseeic( $inflect, $ordering, 'inflect', 1 )
+        parseeic( $inflect, $entry_uid, $ordering, 'inflect', 1 )
           ;    # entry_uid + v + form + Grammatical type (2x) + ordering
         $ordering++;
     }
@@ -786,17 +817,15 @@ sub parselinked {
       ? ( $formhashval{ $linked->att('v') } // 0 )
       : 'NULL';
     my $linked_mark = $linked->att('mark') // "";
-    my $linked_type_uid = ( $linkedtypehashval{$linkedtype} // 0 )
+    my $linked_type_uid = ( $linkedtypehashval{$linkedtype} // 0 );
     
     # there's only one doc per linked, hardcoding 1 for ordering
     if ( $linked->text ne "" ) { 
-           $arnediadtype_uid = $arnediadtypehashval{$linkedtype };
-           parsedoc( $linked, $linkedtype ); # call parsedoc first to set uid
-           push @arnediad_rows, "($linked_uid, $doc_uid, 1, $arnediadtype_uid)";
+       $arnediadtype_uid = $arnediadtypehashval{$linkedtype };
+       parsedoc( $linked, $linkedtype ); # call parsedoc first to set uid
+       push @arnediad_rows, "($linked_uid, $doc_uid, 1, $arnediadtype_uid)";
     }
-      push @linked_rows, "($linked_uid,       $entry_uid,    $linked_lang_uid, 
-                           $linked_form_uid, '$linked_mark', $linkedordering,
-                           $linked_type_uid)";
+    push @linked_rows, "($linked_uid, $entry_uid, $linked_lang_uid, $linked_form_uid, '$linked_mark', $linkedordering, $linked_type_uid)";
     
     # order-example for BEFORE (the 1 = switch for LINKED/before/orderex vs REF example)
     $ordering = 1;
@@ -812,6 +841,7 @@ sub parseeic {
     no warnings 'uninitialized';
     $eic_uid++;
     my ( $eic, $parent_uid, $eicordering, $eictype, $islinkedeic ) = @_;
+    my ( $formtype_uid, $varianttype_uid );
 
     my $eic_lang_uid =
       defined $eic->att('l')
@@ -828,28 +858,35 @@ sub parseeic {
       ? ( $formhashval{ $eic->att('v') } // 0 )
       : 'NULL';
 
-    # set arnediad type to 'eicinflecttype' for form
-    $arnediadtype_uid = $arnediadtypehashval{'eicinflecttype'};
+
     my $arnediad_ordering = 1;
     if ( defined $eic->att('form') ) {
+        $arnediadtype_uid = $arnediadtypehashval{$eictype eq 'class' ? 'classform' : 'inflectform'};
         foreach my $form ( split( ' ', $eic->att('form') ) ) {
+            $formtype_uid = ($eictype eq 'class' ? 
+                             $classformtypehashval{$form} : 
+                             $inflecttypehashval{$form} // 0 );
             push @arnediad_rows,
                 "($eic_uid, "
-              . ( $inflecttypehashval{$form} // 0 )
+              .   $formtype_uid
               . ", $arnediad_ordering, $arnediadtype_uid)";
+            #if ($formtype_uid == 0) {say "eictype: $eictype, undefined form: $form";}  
             $arnediad_ordering++;
         }
     }
     
-    # set arnediad type to 'eicinflectvartype' for variant
-    $arnediadtype_uid = $arnediadtypehashval{'eicinflectvartype'};
     $arnediad_ordering = 1;
     if ( defined $eic->att('variant') ) {
+        $arnediadtype_uid = $arnediadtypehashval{$eictype eq 'class' ? 'classvariant' : 'inflectvariant'};
         foreach my $variant ( split( ' ', $eic->att('variant') ) ) {
+            $varianttype_uid = ($eictype eq 'class' ? 
+                                $classformvartypehashval{$variant} : 
+                                $inflectvartypehashval{$variant} // 0 );
             push @arnediad_rows,
                 "($eic_uid, "
-              . ( $inflecttypehashval{$variant} // 0 )
+              .   $varianttype_uid
               . ", $arnediad_ordering, $arnediadtype_uid)";
+            #if ($varianttype_uid == 0) {say "eictype: $eictype, undefined variant: $variant";}  
             $arnediad_ordering++;
         }
     }
@@ -866,14 +903,10 @@ sub parseeic {
     }
     
     if ($islinkedeic) {
-        push @eic_rows, "($eic_uid,      $parent_uid,   NULL, 
-                          $eic_lang_uid, NULL,         $eic_form_uid, 
-                         '$eic_mark',    $eicordering, $eic_type_uid)";
+        push @eic_rows, "($eic_uid, $parent_uid, NULL, $eic_lang_uid, NULL, $eic_form_uid, '$eic_mark', $eicordering, $eic_type_uid)";
     }
     else {
-        push @eic_rows, "($eic_uid,      NULL,         $parent_uid, 
-                          $eic_lang_uid, NULL,         $eic_form_uid, 
-                         '$eic_mark',    $eicordering, $eic_type_uid)";
+        push @eic_rows, "($eic_uid, NULL, $parent_uid, $eic_lang_uid, NULL, $eic_form_uid, '$eic_mark', $eicordering, $eic_type_uid)";
     }
 }
 
@@ -894,25 +927,21 @@ sub parserule {
     my ( $rule, $ruleordering ) = @_;
     
     my $rule_lang_uid =
-      defined $eic->att('l')
-      ? ( $langhashval{ $eic->att('l') } // 0 )
+      defined $rule->att('l')
+      ? ( $langhashval{ $rule->att('l') } // 0 )
       : 'NULL';
       
     my $rule_rule_uid =
       defined $rule->att('rule')
-      ? ( $formhashval{ $eic->att('rule') } // 0 )
+      ? ( $formhashval{ $rule->att('rule') } // 0 )
       : 'NULL';
     
     my $rule_from_uid =
       defined $rule->att('from')
-      ? ( $formhashval{ $eic->att('from') } // 0 )
+      ? ( $formhashval{ $rule->att('from') } // 0 )
       : 'NULL';
     
-    push @ref_rows, "($ref_uid, NULL,           $entry_uid, 
-                     NULL,      $rule_lang_uid, NULL, 
-                     NULL,      $rule_rule_uid, $rule_from_uid, 
-                     NULL,      '',             $ruleordering,
-                     $reftypehashval{'rule'})";
+    push @ref_rows, "($ref_uid, NULL, $entry_uid, NULL, $rule_lang_uid, NULL, NULL, $rule_rule_uid, $rule_from_uid, NULL, '', $ruleordering, $reftypehashval{'rule'})";
 }
 
 # === PARSE REF ========================================================
@@ -936,20 +965,20 @@ sub parseref {
     ); 
     my $ref_form_uid  = ( $formhashval{ $ref->att('v') } // 'X' );
     
+    # there's only one doc per ref, hardcoding 1 for ordering
+    if ( $ref->text ne "" ) {
+        # set arnediad type to 'reftype' 
+        $arnediadtype_uid = $arnediadtypehashval{$reftype};
+        parsedoc( $ref, $reftype );    # call parsedoc first to set uid
+        push @arnediad_rows, "($ref_uid, $doc_uid, 1, $arnediadtype_uid)";
+    }
+    
     if (!defined($parent_ref_uid)){
        # parent_ref_uid not defined, so this is a ROOT REF element
-       push @ref_rows, "($ref_uid,       NULL,              $entry_uid, 
-                        $ref_gloss_uid,  $ref_lang_uid,     $ref_form_uid, 
-                        $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, 
-                        NULL,            $ref_mark,         $refordering,
-                        $reftypehashval{$reftype})";
+       push @ref_rows, "($ref_uid, NULL, $entry_uid, $ref_gloss_uid, $ref_lang_uid, $ref_form_uid, $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, NULL, $ref_mark, $refordering, $reftypehashval{$reftype})";
     } else {
        # parent_ref_uid is defined, so this is a CHILD REF element
-       push @ref_rows, "($ref_uid,       $parent_ref_uid,   NULL, 
-                        $ref_gloss_uid,  $ref_lang_uid,     $ref_form_uid, 
-                        $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, 
-                        NULL,            $ref_mark,         $refordering,
-                        $reftypehashval{$reftype})";
+       push @ref_rows, "($ref_uid, $parent_ref_uid, NULL, $ref_gloss_uid, $ref_lang_uid, $ref_form_uid, $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, NULL, $ref_mark, $refordering, $reftypehashval{$reftype})";
     }         
     
     # REF child types
@@ -1046,14 +1075,10 @@ sub parseexample {
       
     if ($isorderexample) {
         push @example_rows,
-            "($parent_uid,      NULL,              $example_source_uid, 
-             '$example_source', $example_form_uid, $exampleordering, 
-              $example_type_uid)";
+            "($parent_uid, NULL, $example_source_uid, '$example_source', $example_form_uid, $exampleordering, $example_type_uid)";
     } else {
         push @example_rows,
-            "(NULL,             $parent_uid,       $example_source_uid, 
-             '$example_source', $example_form_uid, $exampleordering, 
-              $example_type_uid)";
+            "(NULL, $parent_uid, $example_source_uid, '$example_source', $example_form_uid, $exampleordering, $example_type_uid)";
     }
 }
 
@@ -1148,26 +1173,22 @@ sub writesql_no_encode {
     close SQLFILE;
 }
 
-
-
 # === FINALLY =================================================
-
-my @arnediad_rows      = ();
-my @entry_rows         = ();
-my @linked_rows        = ();
-my @eic_rows           = ();
-my @ref_rows           = ();
-my @example_rows       = ();
-my @doc_rows           = ();
-
 sub writemainsql {
     writesql( $insert_entry, \@entry_rows, 'entry.sql', '>' );
+    print ' entries';
     writesql( $insert_linked, \@linked_rows, 'linked.sql', '>' );
+    print ', linked';
     writesql( $insert_eic, \@eic_rows, 'eic.sql', '>' );
+    print ', eic';
     writesql( $insert_ref, \@ref_rows, 'ref.sql', '>' );
+    print ', ref\'s';
     writesql( $insert_example, \@example_rows, 'example.sql', '>' );
+    print ', linked';
     writesql( $insert_doc, \@doc_rows, 'doc.sql', '>' );
-    writesql( $insert_arnediad, \@arnediad_rows, 'arnediad.sql', '>>' );
+    print ', docs';
+    writesql( $insert_arnediad, \@arnediad_rows, 'arnediad.sql', '>' );
+    print ' and the rest.';
    
 }
 
@@ -1187,32 +1208,33 @@ sub loadvariables {
     # === LIST type =================================================
 
     @parenttype = (
-        'source-type',             'doc-type',
-        'linked-type',             'example-type',
-        'ref-type',                'class-form-type',
-        'class-form-variant-type', 'inflect-type',
-        'inflect-variant-type',    'speech-type'
+        'arnediad-type',           'class-form-type',
+        'class-form-variant-type', 'doc-type',
+        'eic-type',                'example-type',
+        'inflect-type',            'inflect-variant-type',
+        'linked-type',             'ref-type',
+        'source-type',             'speech-type'
     );
 
     @sourcetype = (
-        'adunaic',    'appendix',   'index',  'minor',
-        'minor-work', 'neologisms', 'quenya', 'secondary',
-        'sindarin',   'telerin',    'work'
+        'adunaic',  'appendix',   'index',  'minor-work',
+        'minor',    'neologisms', 'quenya', 'secondary',
+        'sindarin', 'telerin',    'work'
     );
 
     @doctype = (
-        'cite',    'deprecations', 'element',    'related',
-        'grammar', 'linked',       'inflect',    'ref',
-        'names',   'neologisms',   'class',      'eic',
-        'notes',   'phonetics',    'before',     'phrases',
-        'roots',   'cognate',      'vocabulary', 'words',
-        'deriv'
+        'before',       'cite',    'class',     'cognate',
+        'deprecations', 'deriv',   'eic',       'element',
+        'grammar',      'inflect', 'linked',    'names',
+        'neologisms',   'notes',   'phonetics', 'phrases',
+        'ref',          'related', 'roots',     'vocabulary',
+        'words'
     );
 
     @linkedtype = (
-        'before',   'cognate',     'combine',   'deprecated',
-        'deriv',    'element',     'related',   'see',
-        'see-also', 'see-further', 'see-notes', 'word'
+        'before',      'cognate',   'combine', 'deprecated',
+        'deriv',       'element',   'related', 'see-also',
+        'see-further', 'see-notes', 'see',     'word'
     );
 
     @eictype = ( 'element', 'inflect', 'class' );
@@ -1220,17 +1242,21 @@ sub loadvariables {
     @exampletype = ( 'ref', 'deriv', 'inflect', 'order' );
 
     @reftype = (
-        'change',  'cognate', 'correction', 'deriv',
-        'example', 'ref',     'rule',       'rule-start',
-        'rule-example'
+        'change',  'cognate', 'correction',   'deriv',
+        'example', 'ref',     'rule-example', 'rule-start',
+        'rule'
     );
 
     @arnediadtype = (
-        'entrynote',         'languagenote', 'sourcenote',      'eicinflecttype',
-        'eicinflectvartype', 'eicclasstype', 'eicclassvartype', 'entryspeechtype',     
-        'linked',            'ref',          'eic',             'before',             
-        'cognate',           'deriv',        'element',         'inflect',         
-        'related'
+        'before',            'cognate',
+        'created',           'deriv',
+        'eic',               'classform',
+        'classvariant',      'inflectform',
+        'inflectvariant',    'element',
+        'entrynote',         'entryspeechtype',
+        'inflect',           'languagenote',
+        'linked',            'ref',
+        'related',           'sourcenote'
     );
 
 
@@ -1249,7 +1275,7 @@ sub loadvariables {
         'ya-causative',       'ya-formative'
     );
 
-    @classformvarianttype = ( 'common', 'fem', 'masc' );
+    @classformvartype = ( 'common', 'fem', 'masc' );
 
     @inflecttype = (
         '?',                            'singular',
@@ -1419,7 +1445,7 @@ sub loadvariables {
     $insert_arnediad =
         'INSERT INTO '
       . $schema
-      . 'ARNEDIAD (PARENT_ID, DOC_ID, "ORDERING", ARNEDIAD_TYPE_ID) VALUES ';
+      . 'ARNEDIAD (FROM_ID, TO_ID, "ORDERING", ARNEDIAD_TYPE_ID) VALUES ';
     $insert_eic =
         'INSERT INTO '
       . $schema
