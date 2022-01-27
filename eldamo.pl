@@ -83,9 +83,9 @@ my %eictypehashkey;
 my %reftypehashkey;
 my %arnediadtypehashkey;
 my %classformtypehashkey;
-my %classformvarianttypehashkey;
+my %classformvartypehashkey;
 my %inflecttypehashkey;
-my %inflectvarianttypehashkey;
+my %inflectvartypehashkey;
 my %speechtypehashkey;
 
 my %parenttypehashval;
@@ -97,9 +97,9 @@ my %eictypehashval;
 my %reftypehashval;
 my %arnediadtypehashval;
 my %classformtypehashval;
-my %classformvarianttypehashval;
+my %classformvartypehashval;
 my %inflecttypehashval;
-my %inflectvarianttypehashval;
+my %inflectvartypehashval;
 my %speechtypehashval;
 
 my %langhashkey;
@@ -131,9 +131,9 @@ my @eictype;
 my @reftype;
 my @arnediadtype;
 my @classformtype;
-my @classformvarianttype;
+my @classformvartype;
 my @inflecttype;
-my @inflectvarianttype;
+my @inflectvartype;
 my @speechtype;
 
 my $arnediadtype_uid;
@@ -218,13 +218,13 @@ sub hashtype {
                 \@classformtype, 'class-form-type' );
     $type_uid = 1100;
     crunchtype( \%classformvartypehashkey, \%classformvartypehashval,
-                \@classformvarianttype, 'class-form-variant-type' );
+                \@classformvartype, 'class-form-variant-type' );
     $type_uid = 1200;
     crunchtype( \%inflecttypehashkey, \%inflecttypehashval,
                 \@inflecttype, 'inflect-type' );
     $type_uid = 2000;
     crunchtype( \%inflectvartypehashkey, \%inflectvartypehashval,
-                \@inflectvarianttype, 'inflect-variant-type' );
+                \@inflectvartype, 'inflect-variant-type' );
     $type_uid = 2200;
     crunchtype( \%speechtypehashkey, \%speechtypehashval, \@speechtype, 'speech-type' );
    
@@ -1352,7 +1352,7 @@ sub loadvariables {
         'agental',                      'root'
     );
 
-    @inflectvarianttype = (
+    @inflectvartype = (
         'b-mutation',                   'c-mutation',
         'cw-mutation',                  'd-mutation',
         'dy-mutation',                  'g-mutation',
