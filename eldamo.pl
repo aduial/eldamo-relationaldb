@@ -668,12 +668,13 @@ sub parseword {
     # ==== speech n-m TYPES  / ERNEDIAD ====
     $ordering = 1;
     foreach my $speeches ( $entry->att('speech') ) {
+    
         foreach my $speech ( split( ' ', $speeches ) ) {
             push @arnediad_rows,
                 "($entry_uid, "
               . ( $speechtypehashval{$speech} // 0 )
               . ", $ordering, "
-              . ( $arnediadtypehashval{'entryspeechtype'} // 0 ) . ")";
+              . ( $arnediadtypehashval{'entryspeech'} // 0 ) . ")";
             $ordering++;
         }
     }
@@ -823,6 +824,7 @@ sub parselinked {
     if ( $linked->text ne "" ) { 
        $arnediadtype_uid = $arnediadtypehashval{$linkedtype };
        parsedoc( $linked, $linkedtype ); # call parsedoc first to set uid
+       
        push @arnediad_rows, "($linked_uid, $doc_uid, 1, $arnediadtype_uid)";
     }
     push @linked_rows, "($linked_uid, $entry_uid, $linked_lang_uid, $linked_form_uid, '$linked_mark', $linkedordering, $linked_type_uid)";
@@ -870,7 +872,6 @@ sub parseeic {
                 "($eic_uid, "
               .   $formtype_uid
               . ", $arnediad_ordering, $arnediadtype_uid)";
-            #if ($formtype_uid == 0) {say "eictype: $eictype, undefined form: $form";}  
             $arnediad_ordering++;
         }
     }
@@ -885,8 +886,7 @@ sub parseeic {
             push @arnediad_rows,
                 "($eic_uid, "
               .   $varianttype_uid
-              . ", $arnediad_ordering, $arnediadtype_uid)";
-            #if ($varianttype_uid == 0) {say "eictype: $eictype, undefined variant: $variant";}  
+              . ", $arnediad_ordering, $arnediadtype_uid)"; 
             $arnediad_ordering++;
         }
     }
@@ -970,7 +970,7 @@ sub parseref {
         # set arnediad type to 'reftype' 
         $arnediadtype_uid = $arnediadtypehashval{$reftype};
         parsedoc( $ref, $reftype );    # call parsedoc first to set uid
-        push @arnediad_rows, "($ref_uid, $doc_uid, 1, $arnediadtype_uid)";
+        if (!defined $arnediadtype_uid or $arnediadtype_uid eq "") {say "#980 missing ernediad: $reftype"};
     }
     
     if (!defined($parent_ref_uid)){
@@ -1248,12 +1248,13 @@ sub loadvariables {
     );
 
     @arnediadtype = (
-        'before',            'cognate',
+        'before',            'change',
+        'cognate',           'correction',
         'created',           'deriv',
         'eic',               'classform',
         'classvariant',      'inflectform',
         'inflectvariant',    'element',
-        'entrynote',         'entryspeechtype',
+        'entrynote',         'entryspeech',
         'inflect',           'languagenote',
         'linked',            'ref',
         'related',           'sourcenote'
