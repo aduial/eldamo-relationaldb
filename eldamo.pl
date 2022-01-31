@@ -3,10 +3,10 @@ use warnings;
 use Encode;
 use XML::Twig;
 use Array::Utils qw(:all);
-use Acme::Comment type => 'C++';
 use feature 'say';
 use File::Path qw(make_path);
 use Data::Dumper;
+use List::MoreUtils qw(natatime);
 
 $| = 1
   ; # this is required to not have the progress dots printed all at the same time
@@ -35,25 +35,20 @@ my $type_uid      = 1;
 my $parentcat_uid = 1;
 my $form_uid      = 1;
 my $gloss_uid     = 1;
-my $entry_uid     = 9999; # incremented at top of parseentry, start @ 10000
-my $ref_uid       = 0; # incremented at top of parseref
-my $linked_uid    = 0; # incremented at top of parselinked
-my $example_uid   = 0; # incremented at top of parseexample
-my $eic_uid       = 0; # incremented at top of parseeic
+
+
+my $entry_uid = 9999; 
+
 my $doc_uid       = 0; # incremented at top of parsedoc
 
 my $insert_cat;
 my $insert_created;
 my $insert_doc;
-my $insert_arnediad;
-my $insert_eic;
+my $insert_relation;
 my $insert_entry;
-my $insert_example;
 my $insert_form;
 my $insert_gloss;
 my $insert_language;
-my $insert_linked;
-my $insert_ref;
 my $insert_source;
 my $insert_type;
 
@@ -64,12 +59,8 @@ my @lang_rows          = ();
 my @created_rows       = ();
 my @form_rows          = ();
 my @gloss_rows         = ();
-my @arnediad_rows      = ();
+my @relation_rows      = ();
 my @entry_rows         = ();
-my @linked_rows        = ();
-my @eic_rows           = ();
-my @ref_rows           = ();
-my @example_rows       = ();
 my @doc_rows           = ();
 
 my @raw_forms        = ();
@@ -79,11 +70,10 @@ my @raw_created      = ();
 my %parenttypehashkey;
 my %sourcetypehashkey;
 my %doctypehashkey;
-my %linkedtypehashkey;
-my %exampletypehashkey;
-my %eictypehashkey;
-my %reftypehashkey;
-my %arnediadtypehashkey;
+my %relationtypehashkey;
+my %entitytypehashkey;
+my %entrytypehashkey;
+my %entryclasshashkey;
 my %classformtypehashkey;
 my %classformvartypehashkey;
 my %inflecttypehashkey;
@@ -93,11 +83,10 @@ my %speechtypehashkey;
 my %parenttypehashval;
 my %sourcetypehashval;
 my %doctypehashval;
-my %linkedtypehashval;
-my %exampletypehashval;
-my %eictypehashval;
-my %reftypehashval;
-my %arnediadtypehashval;
+my %relationtypehashval;
+my %entitytypehashval;
+my %entrytypehashval;
+my %entryclasshashval;
 my %classformtypehashval;
 my %classformvartypehashval;
 my %inflecttypehashval;
@@ -127,18 +116,20 @@ my %languages;
 my @parenttype;
 my @sourcetype;
 my @doctype;
-my @linkedtype;
-my @exampletype;
-my @eictype;
-my @reftype;
-my @arnediadtype;
+my @relationtype;
+my @entitytype;
+my @entrytype;
+my @entryclass;
 my @classformtype;
 my @classformvartype;
 my @inflecttype;
 my @inflectvartype;
 my @speechtype;
 
-my $arnediadtype_uid;
+my $relationtype_uid;
+
+my @entry_uid_stack;
+my $latestdoc;
 
 # create files and dir if needed
 my $SQLFILE;
@@ -146,6 +137,7 @@ eval { make_path($outputdir) };
 if ($@) {
     print "Couldn't create $outputdir: $@";
 }
+my $maxrows = 50000;
 
 # NOTE the progress indicator moduli aren't representing anything but a visual clue
 
@@ -182,13 +174,16 @@ sub mainloop {
     # language & source docs have been parsed in sub harvest()
     
     foreach my $entry ( $root->children('word') ) {
+        # clear uid stack and latestdoc (used to avoid duplicate doc rows)
+        undef @entry_uid_stack;
+        undef $latestdoc;
         parseword($entry);
         print '.' if ( $entry_uid % 800 == 0 );
     }
     say " done.";
     print "   Writing remaining SQL files ...";
     writemainsql() if $mode eq "-s";
-    say " done.";
+    say " There. Done.";
     say "=== end of processing ===";
 }
 
@@ -201,20 +196,17 @@ sub hashtype {
     crunchtype( \%parenttypehashkey, \%parenttypehashval, \@parenttype, undef );
 
     $type_uid = 100;
-    crunchtype( \%sourcetypehashkey, \%sourcetypehashval, \@sourcetype, 'source-type' );
+    crunchtype( \%entrytypehashkey, \%entrytypehashval, \@entrytype, 'entry-type' );
     $type_uid = 200;
-    crunchtype( \%doctypehashkey, \%doctypehashval, \@doctype, 'doc-type' );
+    crunchtype( \%sourcetypehashkey, \%sourcetypehashval, \@sourcetype, 'source-type' );
     $type_uid = 300;
-    crunchtype( \%linkedtypehashkey, \%linkedtypehashval, \@linkedtype, 'linked-type' );
+    crunchtype( \%doctypehashkey, \%doctypehashval, \@doctype, 'doc-type' );
     $type_uid = 400;
-    crunchtype( \%eictypehashkey, \%eictypehashval, \@eictype, 'eic-type' );
+    crunchtype( \%relationtypehashkey, \%relationtypehashval, \@relationtype, 'relation-type' );
     $type_uid = 500;
-    crunchtype( \%exampletypehashkey, \%exampletypehashval, \@exampletype, 'example-type' );
+    crunchtype( \%entitytypehashkey, \%entitytypehashval, \@entitytype, 'entity-type' );
     $type_uid = 600;
-    crunchtype( \%reftypehashkey, \%reftypehashval, \@reftype, 'ref-type' );
-    $type_uid = 700;
-    crunchtype( \%arnediadtypehashkey, \%arnediadtypehashval,
-                \@arnediadtype, 'arnediad-type' );
+    crunchtype( \%entryclasshashkey, \%entryclasshashval, \@entryclass, 'entry-class' );
     $type_uid = 1000;
     crunchtype( \%classformtypehashkey, \%classformtypehashval,
                 \@classformtype, 'class-form-type' );
@@ -231,7 +223,7 @@ sub hashtype {
     crunchtype( \%speechtypehashkey, \%speechtypehashval, \@speechtype, 'speech-type' );
    
     undef %parenttypehashval;
-    writesql( $insert_type, \@type_rows, 'type.sql', '>' )
+    writesql( $insert_type, \@type_rows, 'type', '>' )
       if $mode eq "-s";    # table TYPE
     undef %parenttypehashkey;
     undef @type_rows;
@@ -279,17 +271,17 @@ sub hashlangs {
     # flip hash to by value
     sayhashkeytovalue( \%langhashkey, \%langhashval );
 
-    # set $arnediadtype_uid to 'language'
-    $arnediadtype_uid = $arnediadtypehashval{'languagenote'};
+    # set $relationtype_uid to 'language'
+    $relationtype_uid = $relationtypehashval{'languagenote'};
 
     # iterate over all language elements in Eldamo to retrieve documentation
     foreach my $doclang ( $root->children('language') ) {
         harvestlangdocs($doclang);
     }
 
-    writesql_no_encode( $insert_language, \@lang_rows, 'language.sql', '>' )
+    writesql_no_encode( $insert_language, \@lang_rows, 'language', '>' )
       if $mode eq "-s";    # table LANGUAGE
-     # write sql only after all three type of arnediad's have been added
+     # write sql only after all three type of relation's have been added
      # writesql( $insert_language_doc, \@langdoc_rows, 'language_doc.sql', '>' )
      #   if $mode eq "-s";    # table LANGUAGE_DOC
      #undef %langhashkey;
@@ -324,12 +316,14 @@ sub crunchlangdocs {
     }
 }
 
-# add the doc to the docs table, create row for langId, docId, ordering, arnediad_type
+# add the doc to the docs table, create row for langId, docId, ordering, relation_type
 sub parselangdoc {
     my ( $lang_uid, $langdoc, $doctype, $ordering ) = @_;
+    my $langtypeuid = ( $entitytypehashval{'language'} // 'NULL' );
+    my $docypeuid = ( $entitytypehashval{'doc'} // 'NULL' );
     parsedoc( $langdoc, $doctype );    # <- doc_uid gets set here
     # lang_uid is set globally in calling harvestlangdocs
-    push @arnediad_rows, "($lang_uid, $doc_uid, $ordering, $arnediadtype_uid)";
+    push @relation_rows, "($lang_uid, $langtypeuid, $doc_uid, $docypeuid, $ordering, $relationtype_uid)";
 }
 
 # === HARVEST CATEGORIES =============================================
@@ -338,7 +332,7 @@ sub hashcats {
     print "  => categories ";
     foreach my $cats ( $root->children('cats') ) { harvestcats($cats); }
     sayhashkeytovalue( \%cathashkey, \%cathashval );
-    writesql( $insert_cat, \@cat_rows, 'cat.sql', '>' ) if $mode eq "-s"; # table CAT
+    writesql( $insert_cat, \@cat_rows, 'cat', '>' ) if $mode eq "-s"; # table CAT
     undef %cathashkey;
     undef @cat_rows;
     say " done.";
@@ -382,7 +376,7 @@ sub hashcreated {
     undef @raw_created;
     sayhashkeytovalue( \%createdhashkey, \%createdhashval );
     undef %createdhashkey;
-    writesql( $insert_created, \@created_rows, 'created.sql', '>' ) if $mode eq "-s";    # table CREATED
+    writesql( $insert_created, \@created_rows, 'created', '>' ) if $mode eq "-s";    # table CREATED
     undef @created_rows;
     say " done.";
 }
@@ -415,11 +409,11 @@ sub hashsources {
     sayhashkeytovalue( \%sourcehashkey, \%sourcehashval );
     undef %sourcehashkey;
     
-    # set $arnediadtype_uid to 'source'
-    $arnediadtype_uid = $arnediadtypehashval{'sourcenote'};
+    # set $relationtype_uid to 'source'
+    $relationtype_uid = $relationtypehashval{'sourcenote'};
    
-    writesql( $insert_source, \@source_rows, 'source.sql', '>') if $mode eq "-s";    # table SOURCE 
-    # write sql only after all three type of arnediad's have been added
+    writesql( $insert_source, \@source_rows, 'source', '>') if $mode eq "-s";    # table SOURCE 
+    # write sql only after all three type of relation's have been added
     #writesql( $insert_source_doc, \@srcdoc_rows, 'source_doc.sql', '>' ) if $mode eq "-s";    # table SOURCE_DOC
     undef @source_rows;
     say " done.";
@@ -429,9 +423,11 @@ sub harvestsources {
     my ($source) = @_;
     $ordering = 1;
     $sourcehashkey{$source_uid} = $source->att('prefix');
+    my $sourcename = $source->att('name');
+    $sourcename =~ s/\'/\'\'/g;
     push @source_rows,
         "($source_uid, '"
-      . $source->att('name') . "', '"
+      . $sourcename . "', '"
       . $source->att('prefix') . "', "
       . (
         defined $source->att('type')
@@ -456,8 +452,10 @@ sub harvestsources {
 sub parsesourcenote {
     no warnings 'uninitialized';
     my ( $doc, $sourcenotetype, $ordering ) = @_; # sourcenotetype = notes or cite
+    my $sourcetypeuid = ( $entitytypehashval{'source'} // 'NULL' );
+    my $docypeuid = ( $entitytypehashval{'doc'} // 'NULL' );
     parsedoc( $doc, $sourcenotetype );    # always call parsedoc first to set uid
-    push @arnediad_rows, "($source_uid, $doc_uid, $ordering, $arnediadtype_uid)";
+    push @relation_rows, "($source_uid, $sourcetypeuid, $doc_uid, $docypeuid, $ordering, $relationtype_uid)";
 }
 
 # === HARVEST FORMS =============================================
@@ -478,7 +476,7 @@ sub hashforms {
     undef @raw_forms;
     sayhashkeytovalue( \%formhashkey, \%formhashval );
     undef %formhashkey;
-    writesql( $insert_form, \@form_rows, 'form.sql', '>') if $mode eq "-s";    # table FORM
+    writesql( $insert_form, \@form_rows, 'form', '>') if $mode eq "-s";    # table FORM
     undef @form_rows;
     say " done.";
 }
@@ -614,7 +612,7 @@ sub hashglosses {
     undef @raw_glosses;
     sayhashkeytovalue( \%glosshashkey, \%glosshashval );
     undef %glosshashkey;
-    writesql( $insert_gloss, \@gloss_rows, 'gloss.sql', '>') if $mode eq "-s";    # table GLOSS
+    writesql( $insert_gloss, \@gloss_rows, 'gloss', '>') if $mode eq "-s";    # table GLOSS
     undef @gloss_rows;
     say " done.";
 }
@@ -639,449 +637,183 @@ sub harvestglosses {
 
 sub parseword {
     no warnings 'uninitialized';
-    my ( $entry, $parent_uid, $childorder ) = @_;
+
+    # GLOBAL!
     $entry_uid++;
-    
-       $ordering            = 1;
-    my $entry_form_uid      = ( $formhashval   { $entry->att('v') }           // 'X' );
-    my $entry_lang_uid      = ( $langhashval   { $entry->att('l') }           // 'X' );
-    my $entry_gloss_uid     = ( $glosshashval  { $entry->att('gloss') }       // 'NULL' );
-    my $entry_ngloss_uid    = ( $glosshashval  { $entry->att('ngloss') }      // 'NULL' );
-    my $entry_cat_uid       = ( $cathashval    { $entry->att('cat') }         // 'NULL' );
-    
-    my $entry_created_uid   = ( $createdhashval{ $entry->att('created') }     // 'NULL' );
-    
-    my $entry_ruleform_uid  = ( $formhashval   { $entry->att('rule') }        // 'NULL' );
-    my $entry_stemform_uid  = ( $formhashval   { $entry->att('stem') }        // 'NULL' );
-    my $entry_fromform_uid  = ( $formhashval   { $entry->att('from') }        // 'NULL' );
-    my $entry_orthoform_uid = ( $formhashval   { $entry->att('orthography') } // 'NULL' );
-    my $entry_tengwar       = $entry->att('tengwar')                          // "";
-    my $entry_mark          = $entry->att('mark')                             // "";
-    my $entry_neoversion    = $entry->att('neo-version')                      // "";
-    my $entry_orderfield    = $entry->att('order')                            // "";
-    my $entry_eldamopageid  = $entry->att('page-id')                          // "";
-    my $entrytype_uid       = entrytype( $entry->att('speech')             // 'unknown' );
-       $parent_uid          = $parent_uid                                       // 'NULL';
-    
-    push @entry_rows, "($entry_uid, $entry_form_uid, $entry_lang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_created_uid, $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_orthoform_uid, $parent_uid, $ordering, $entrytype_uid)";
 
-    # ==== speech n-m TYPES  / ERNEDIAD ====
-    $ordering = 1;
-    foreach my $speeches ( $entry->att('speech') ) {
+    # push first level to the stack (it was cleared before this method)
+    # this: @entry_uid_stack[-1]; parent: $entry_uid_stack[-2]
+    push @entry_uid_stack, $entry_uid;
+
+    my $uid        = $entry_uid_stack[-1];
+    my $parent_uid = $entry_uid_stack[-2];
+
+    my ( $element, $order, $type ) = @_;
+
+    my $entry_ruleform_uid;
+    my $entry_fromform_uid;
+    my $entry_stemform_uid;
+
+    if ( !defined $type ) {
+        $type = 'entry';
+    }
     
-        foreach my $speech ( split( ' ', $speeches ) ) {
-            push @arnediad_rows,
-                "($entry_uid, "
-              . ( $speechtypehashval{$speech} // 0 )
-              . ", $ordering, "
-              . ( $arnediadtypehashval{'entryspeech'} // 0 ) . ")";
-            $ordering++;
+    my $entrytype_uid = ( $entitytypehashval{'entry'} // 'NULL' );
+    my $doctype_uid = ( $entitytypehashval{'doc'} // 'NULL' );
+    my $typetype_uid = ( $entitytypehashval{'type'} // 'NULL' );
+    my $createdtype_uid = ( $entitytypehashval{'created'} // 'NULL' );
+
+    # register RELATION
+    if ( defined $parent_uid ) {
+        $relationtype_uid = ( $relationtypehashval{$type} // $type );
+        #$relationtype_uid = ( $relationtypehashval{$type} // 'NULL' );
+        push @relation_rows, "($parent_uid, $entrytype_uid, $uid, $entrytype_uid, $order, $relationtype_uid)";
+    }
+    
+    $relationtype_uid = ( $relationtypehashval{'entrynote'} // 'NULL' );
+    
+    # create DOC & register RELATION 
+    if ($element->text ne "" && $type ne "#CDATA"){
+    
+        if (defined $latestdoc && substr($element->text, 0, 100) eq $latestdoc){
+           #say "already exists";
+           #say $latestdoc;
+           #say substr($element->text, 0, 100);
+           pop @doc_rows; # remove last DOC
+           pop @relation_rows; # remove last RELATION
         }
-    }
     
-    # ==== created n-m TYPES  / ERNEDIAD ====
-    $ordering = 1;
-    foreach my $creators ( $entry->att('created') ) {
-        foreach my $creator ( split( ',', $creators ) ) {
-            $creator=~ s/^\s+//;
-            push @arnediad_rows,
-                "($entry_uid, "
-              . ( $createdhashval{ $creator } // 0 )
-              . ", $ordering, "
-              . ( $arnediadtypehashval{'created'} // 0 ) . ")";
-            $ordering++;
-        }
+        $latestdoc = substr($element->text, 0, 100); # new latest doc var
+        parsedoc( $element, $type );    # call parsedoc first to set uid
+        push @relation_rows, "($uid, $entrytype_uid, $doc_uid, $doctype_uid, 1, $relationtype_uid)";
     }
-    
-    # ==== process LINKED ====
-    $ordering = 1;
-    foreach my $before ( $entry->children('before') ) {
-        parselinked( $before, $ordering, 'before' )
-          ;    # entry_uid + to_v + to_l (= after_entry_id)
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $cognate ( $entry->children('cognate') ) {
-        parselinked( $cognate, $ordering, 'cognate' )
-          ; # entry_uid + cognate_v + cognate_l (= cognate_entry_id) + source + mark
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $combine ( $entry->children('combine') ) {
-        parselinked( $combine, $ordering, 'combine' )
-          ; 
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $deprecated ( $entry->children('deprecated') ) {
-        parselinked( $deprecated, $ordering, 'deprecated' )
-          ; 
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $deriv ( $entry->children('deriv') ) {
-        parselinked( $deriv, $ordering, 'deriv' )
-          ;    # this entry_uid + deriv_v + deriv_l (= deriv_entry_id) + mark
-        $ordering++;    # + additional multiple FORM_ID + ordering
-    }
-    $ordering = 1;
-    foreach my $related ( $entry->children('related') ) {
-        parselinked( $related, $ordering, 'related' )
-          ; # entry_uid + entry_uid + related_v + related_l (= related_entry_id) + mark
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $see ( $entry->children('see') ) {
-        parselinked( $see, $ordering, 'see' )
-          ;    # entry_uid + see_v + see_l + TYPE
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $seefurther ( $entry->children('see-further') ) {
-        parselinked( $seefurther, $ordering, 'see-further' )
-          ;    # entry_uid + see_v + see_l + TYPE
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $seenotes ( $entry->children('see-notes') ) {
-        parselinked( $seenotes, $ordering, 'see-notes' )
-          ;    # entry_uid + see_v + see_l + TYPE
-        $ordering++;
-    }
-    
-    # ==== REF ====
-    # (REF also contains RULE)
-    $ordering = 1;
-    foreach my $rule ( $entry->children('rule') ) {
-        parserule( $rule, $ordering );
-        $ordering++;
-    }
-    # 'undef' = parent REF, so not defined here = root ref has context entry_uid as parent
-    $ordering = 1;
-    foreach my $ref ( $entry->children('ref') ) {
-        parseref( $ref, undef, $ordering, 'ref' );
-        $ordering++;
-    }
-    
-    # ==== EIC ====
-    $ordering = 1;
-    foreach my $class ( $entry->children('class') ) {
-        parseeic( $class, $entry_uid, $ordering, 'class', 1 )
-          ;    # entry_uid + Grammatical type (2x) + ordering
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $element ( $entry->children('element') ) {
-        parseeic( $element, $entry_uid, $ordering, 'element', 1 )
-          ; # entry_uid + element_v + parent_l + Grammatical type (2x) + ordering
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $inflect ( $entry->children('inflect') ) {
-        parseeic( $inflect, $entry_uid, $ordering, 'inflect', 1 )
-          ;    # entry_uid + v + form + Grammatical type (2x) + ordering
-        $ordering++;
-    }
-    
-    # ==== DOC / ERNEDIAD ====
-    # set $arnediadtype_uid to 'entrynote'
-    $arnediadtype_uid = $arnediadtypehashval{'entrynote'};
-    $ordering = 1;
-    foreach my $note ( $entry->children('notes') ) {
-        parseentrynote( $note, $ordering );
-        $ordering++;
-    }
-    
-    # ==== recurse ====
-    $ordering = 1;
-    foreach my $child ( $entry->children('word') ) {
-        parseword( $child, $entry_uid, $ordering );
-        $ordering++;
-    }
-    $ordering = 1;
-}
 
-# === PARSE LINKED =====================================================
-# entry_uid in global context
-sub parselinked {
-    no warnings 'uninitialized';
-    $linked_uid++;
-    my ( $linked, $linkedordering, $linkedtype ) = @_;
-
-    my $linked_lang_uid =
-      defined $linked->att('l')
-      ? ( $langhashval{ $linked->att('l') } // 0 )
+    my $entry_form_uid  = ( $formhashval{ $element->att('v') }      // 'NULL' );
+    my $entry_lang_uid  = ( $langhashval{ $element->att('l') }      // 'NULL' );
+    my $entry_rlang_uid = ( $langhashval{ $element->att('rl') }     // 'NULL' );
+    my $entry_gloss_uid = ( $glosshashval{ $element->att('gloss') } // 'NULL' );
+    my $entry_ngloss_uid =
+      ( $glosshashval{ $element->att('ngloss') } // 'NULL' );
+    my $entry_cat_uid = ( $cathashval{ $element->att('cat') } // 'NULL' );
+    my $entry_source_uid =
+      defined $element->att('source')
+      ? (
+        $sourcehashval{
+            substr(
+                $element->att('source'), 0,
+                index( $element->att('source'), '/' )
+            )
+        } // 'NULL'
+      )
       : 'NULL';
+    my $entry_source = $element->att('source') // '';
 
-    my $linked_form_uid =
-      defined $linked->att('v')
-      ? ( $formhashval{ $linked->att('v') } // 0 )
-      : 'NULL';
-    my $linked_mark = $linked->att('mark') // "";
-    my $linked_type_uid = ( $linkedtypehashval{$linkedtype} // 0 );
-    
-    # there's only one doc per linked, hardcoding 1 for ordering
-    if ( $linked->text ne "" ) { 
-       $arnediadtype_uid = $arnediadtypehashval{$linkedtype };
-       parsedoc( $linked, $linkedtype ); # call parsedoc first to set uid
-       
-       push @arnediad_rows, "($linked_uid, $doc_uid, 1, $arnediadtype_uid)";
+    if ( $type =~ m/(change|deriv)/ ) {
+        $entry_ruleform_uid = ( $formhashval{ $element->att('i1') } // 'NULL' );
+        $entry_fromform_uid = ( $formhashval{ $element->att('i2') } // 'NULL' );
+        $entry_stemform_uid = ( $formhashval{ $element->att('i3') } // 'NULL' );
     }
-    push @linked_rows, "($linked_uid, $entry_uid, $linked_lang_uid, $linked_form_uid, '$linked_mark', $linkedordering, $linked_type_uid)";
-    
-    # order-example for BEFORE (the 1 = switch for LINKED/before/orderex vs REF example)
-    $ordering = 1;
-    foreach my $orderexample ( $linked->children('order-example') ) {
-        parseexample( $orderexample, $linked_uid,  $ordering, 1 );
-        $ordering++;
-    }
-}
-
-# === PARSE EIC =====================================================
-# entry_uid & ref_uid NOT in global context but in parent_uid
-sub parseeic {
-    no warnings 'uninitialized';
-    $eic_uid++;
-    my ( $eic, $parent_uid, $eicordering, $eictype, $islinkedeic ) = @_;
-    my ( $formtype_uid, $varianttype_uid );
-
-    my $eic_lang_uid =
-      defined $eic->att('l')
-      ? ( $langhashval{ $eic->att('l') } // 0 )
-      : 'NULL';
-
-    my $eic_source_uid =
-      defined $eic->att('source')
-      ? ( $sourcehashkey{ $eic->att('source') } // 0 )
-      : 'NULL';
-
-    my $eic_form_uid =
-      defined $eic->att('v')
-      ? ( $formhashval{ $eic->att('v') } // 0 )
-      : 'NULL';
-
-
-    my $arnediad_ordering = 1;
-    if ( defined $eic->att('form') ) {
-        $arnediadtype_uid = $arnediadtypehashval{$eictype eq 'class' ? 'classform' : 'inflectform'};
-        foreach my $form ( split( ' ', $eic->att('form') ) ) {
-            $formtype_uid = ($eictype eq 'class' ? 
-                             $classformtypehashval{$form} : 
-                             $inflecttypehashval{$form} // 0 );
-            push @arnediad_rows,
-                "($eic_uid, "
-              .   $formtype_uid
-              . ", $arnediad_ordering, $arnediadtype_uid)";
-            $arnediad_ordering++;
-        }
-    }
-    
-    $arnediad_ordering = 1;
-    if ( defined $eic->att('variant') ) {
-        $arnediadtype_uid = $arnediadtypehashval{$eictype eq 'class' ? 'classvariant' : 'inflectvariant'};
-        foreach my $variant ( split( ' ', $eic->att('variant') ) ) {
-            $varianttype_uid = ($eictype eq 'class' ? 
-                                $classformvartypehashval{$variant} : 
-                                $inflectvartypehashval{$variant} // 0 );
-            push @arnediad_rows,
-                "($eic_uid, "
-              .   $varianttype_uid
-              . ", $arnediad_ordering, $arnediadtype_uid)"; 
-            $arnediad_ordering++;
-        }
-    }
-
-    my $eic_mark = $eic->att('mark') // "";
-    my $eic_type_uid = ( $eictypehashval{$eictype} // 0 );
-
-    # there's only one doc per eic, hardcoding 1 for ordering
-    if ( $eic->text ne "" ) {
-        # set arnediad type to 'eictype' (element, inflect)
-        $arnediadtype_uid = $arnediadtypehashval{$eictype};
-        parsedoc( $eic, $eictype );    # call parsedoc first to set uid
-        push @arnediad_rows, "($eic_uid, $doc_uid, 1, $arnediadtype_uid)";
-    }
-    
-    if ($islinkedeic) {
-        push @eic_rows, "($eic_uid, $parent_uid, NULL, $eic_lang_uid, NULL, $eic_form_uid, '$eic_mark', $eicordering, $eic_type_uid)";
+    elsif ( $type =~ m/(start|rule-example)/ ) {
+        $entry_ruleform_uid =
+          ( $formhashval{ $element->att('rule') } // 'NULL' );
+        $entry_fromform_uid =
+          ( $formhashval{ $element->att('from') } // 'NULL' );
+        $entry_stemform_uid =
+          ( $formhashval{ $element->att('stage') } // 'NULL' );
     }
     else {
-        push @eic_rows, "($eic_uid, NULL, $parent_uid, $eic_lang_uid, NULL, $eic_form_uid, '$eic_mark', $eicordering, $eic_type_uid)";
+        $entry_ruleform_uid =
+          ( $formhashval{ $element->att('rule') } // 'NULL' );
+        $entry_fromform_uid =
+          ( $formhashval{ $element->att('from') } // 'NULL' );
+        $entry_stemform_uid =
+          ( $formhashval{ $element->att('stem') } // 'NULL' );
     }
+    my $entry_orthoform_uid =
+      ( $formhashval{ $element->att('orthography') } // 'NULL' );
+    my $entry_tengwar      = $element->att('tengwar')     // "";
+    my $entry_mark         = $element->att('mark')        // "";
+    my $entry_neoversion   = $element->att('neo-version') // "";
+    my $entry_eldamopageid = $element->att('page-id')     // "";
+    my $entry_orderfield   = $element->att('order')       // "";
+    my $entry_class_uid =
+      defined $element->att('speech')
+      ? entryclass( $element->att('speech') )
+      : 'NULL';
+    my $entry_type_uid = ( $entrytypehashval{$type} // 'NULL' );
+
+    if ($entry_type_uid eq 'NULL'){
+        say $type;
+    }
+
+    push @entry_rows,
+"($uid, $entry_form_uid, $entry_lang_uid, $entry_rlang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_source_uid, '$entry_source', $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, $entry_orthoform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_class_uid, $entry_type_uid)";
+
+    
+    # ==== speech RELATION ====
+    $relationtype_uid = ( $relationtypehashval{'entryspeech'} // 'NULL' );
+    $order = 1;
+    foreach my $speech ( split( ' ', $element->att('speech') ) ) {
+        my $speech_uid = ( $speechtypehashval{$speech} // 'NULL' );
+        push @relation_rows, "($uid, $entrytype_uid, $speech_uid, $typetype_uid, $order, $relationtype_uid)";
+        $order++;
+    }
+
+    # ==== created RELATION ====
+    $relationtype_uid = ( $relationtypehashval{'created'} // 'NULL' );
+    $order = 1;
+    foreach my $creator ( split( ',', $element->att('created') ) ) {
+        $creator =~ s/^\s+//;
+        my $created_uid = ( $createdhashval{$creator} // 'NULL' );
+        push @relation_rows, "($uid, $entrytype_uid, $created_uid, $createdtype_uid, $order, $relationtype_uid)";
+        $order++;
+    }
+    
+    $order = 1;
+    if ( defined $element->att('form') ) {
+        my $formtype_uid;
+        $relationtype_uid = $relationtypehashval{$type eq 'class' ? 'classform' : 'inflectform'};
+        foreach my $form ( split( ' ', $element->att('form') ) ) {
+            $formtype_uid = ($type eq 'class' ? 
+                             $classformtypehashval{$form} : 
+                             $inflecttypehashval{$form} // 0 );
+            # register RELATION
+            push @relation_rows, "($uid, $entrytype_uid, $formtype_uid, $typetype_uid, $order, $relationtype_uid)";
+            $order++;
+        }
+    }
+    
+    $order = 1;
+    if ( defined $element->att('variant') ) {
+        my $varianttype_uid;
+        $relationtype_uid = $relationtypehashval{$type eq 'class' ? 'classvariant' : 'inflectvariant'};
+        foreach my $variant ( split( ' ', $element->att('variant') ) ) {
+            $varianttype_uid = ($type eq 'class' ? 
+                                $classformvartypehashval{$variant} : 
+                                $inflectvartypehashval{$variant} // 0 );
+            # register RELATION
+            push @relation_rows, "($uid, $entrytype_uid, $varianttype_uid, $typetype_uid, $order, $relationtype_uid)";
+            $order++;
+        }
+    }
+    
+    $order = 1;
+    foreach my $child ( $element->children ) {
+        parseword( $child, $order, $child->name ) unless ($child->name =~ m/(DATA|ivatives|table|form)/);
+        $order++;
+    }
+    pop @entry_uid_stack;
 }
 
-# === PARSE ENTRY NOTE =================================================
-#entry_uid, doc_uid, arnediadtype_uid in global context
-sub parseentrynote {
+sub entryclass {
     no warnings 'uninitialized';
-    my ( $note, $ordering ) = @_;
-    parsedoc( $note, 'notes' );    #first call this to set doc_uid
-    push @arnediad_rows, "($entry_uid, $doc_uid, $ordering, $arnediadtype_uid)";
+    my ($speech) = @_;
+    if    ( !defined $speech )     { return $entryclasshashval{'unknown'}; }
+    elsif ( $speech =~ /phone/ )   { return $entryclasshashval{'phonetical'}; }
+    elsif ( $speech =~ /grammar/ ) { return $entryclasshashval{'grammatical'}; }
+    elsif ( $speech =~ /root/ )    { return $entryclasshashval{'root'}; }
+    else                           { return $entryclasshashval{'lexical'}; }
 }
-
-# === PARSE RULE (in table REF) =================================================
-# context entry_uid, ref_uid
-sub parserule {
-    no warnings 'uninitialized';
-    $ref_uid++;
-    my ( $rule, $ruleordering ) = @_;
-    
-    my $rule_lang_uid =
-      defined $rule->att('l')
-      ? ( $langhashval{ $rule->att('l') } // 0 )
-      : 'NULL';
-      
-    my $rule_rule_uid =
-      defined $rule->att('rule')
-      ? ( $formhashval{ $rule->att('rule') } // 0 )
-      : 'NULL';
-    
-    my $rule_from_uid =
-      defined $rule->att('from')
-      ? ( $formhashval{ $rule->att('from') } // 0 )
-      : 'NULL';
-    
-    push @ref_rows, "($ref_uid, NULL, $entry_uid, NULL, $rule_lang_uid, NULL, NULL, $rule_rule_uid, $rule_from_uid, NULL, '', $ruleordering, $reftypehashval{'rule'})";
-}
-
-# === PARSE REF ========================================================
-# context entry_uid
-sub parseref {
-    no warnings 'uninitialized';     
-    $ref_uid++;
-    
-    my ( $ref, $parent_ref_uid, $refordering, $reftype ) = @_;
-    
-    my $ref_rulefrom_uid = ( $formhashval{ $ref->att('from') } // 'NULL' );
-    my $ref_gloss_uid = ( $glosshashval{ $ref->att('gloss') } // 'NULL' );
-    my $ref_lang_uid  = ( $langhashval{ $ref->att('l') } // 'NULL' );
-    my $ref_mark = $ref->att('mark') // "";
-    my $ref_rulerl_uid = ( $langhashval{ $ref->att('rl') } // 'NULL' );
-    my $ref_rulerule_uid = ( $formhashval{ $ref->att('rule') } // 'NULL' );
-    my $ref_source_uid = (
-        $sourcehashval{
-            substr( $ref->att('source'), 0, index( $ref->att('source'), '/' ) )
-        } // 'NULL'
-    ); 
-    my $ref_form_uid  = ( $formhashval{ $ref->att('v') } // 'X' );
-    
-    # there's only one doc per ref, hardcoding 1 for ordering
-    if ( $ref->text ne "" ) {
-        # set arnediad type to 'reftype' 
-        $arnediadtype_uid = $arnediadtypehashval{$reftype};
-        parsedoc( $ref, $reftype );    # call parsedoc first to set uid
-        if (!defined $arnediadtype_uid or $arnediadtype_uid eq "") {say "#980 missing ernediad: $reftype"};
-    }
-    
-    if (!defined($parent_ref_uid)){
-       # parent_ref_uid not defined, so this is a ROOT REF element
-       push @ref_rows, "($ref_uid, NULL, $entry_uid, $ref_gloss_uid, $ref_lang_uid, $ref_form_uid, $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, NULL, $ref_mark, $refordering, $reftypehashval{$reftype})";
-    } else {
-       # parent_ref_uid is defined, so this is a CHILD REF element
-       push @ref_rows, "($ref_uid, $parent_ref_uid, NULL, $ref_gloss_uid, $ref_lang_uid, $ref_form_uid, $ref_source_uid, $ref_rulerule_uid, $ref_rulefrom_uid, NULL, $ref_mark, $refordering, $reftypehashval{$reftype})";
-    }         
-    
-    # REF child types
-    # RULESTART & RULE-EXAMPLE (children of DERIV REF)
-    $ordering = 1;
-    foreach my $rulestart ( $ref->children('rule-start') ) {
-        parseref( $rulestart, $ref_uid, $ordering, 'rule-start' );
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $ruleexample ( $ref->children('rule_example') ) {
-        parseref( $ruleexample, $ref_uid, $ordering, 'rule_example' );
-        $ordering++;
-    }
-    
-    # other REF children
-    $ordering = 1;
-    foreach my $change ( $ref->children('change') ) {
-        parseref( $change, $ref_uid, $ordering, 'change' );
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $cognate ( $ref->children('cognate') ) {
-        parseref( $cognate, $ref_uid, $ordering, 'cognate' ); 
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $correction ( $ref->children('correction') ) {
-        parseref( $correction, $ref_uid, $ordering, 'correction' ); 
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $deriv ( $ref->children('deriv') ) {
-        parseref( $deriv, $ref_uid, $ordering, 'deriv' );
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $related ( $ref->children('related') ) {
-        parseref( $related, $ref_uid, $ordering, 'related' );    
-        $ordering++;
-    }
-    
-    # EXAMPLE (parameter 0 means REF example of deriv or inflect type)
-    $ordering = 1;
-    foreach my $example ( $ref->children('example') ) {
-        parseexample( $example, $ref_uid, $ordering, 0 );
-        $ordering++;
-    }
-    
-    # EIC types
-    $ordering = 1;
-    foreach my $element ( $ref->children('element') ) {
-        parseeic( $element, $ref_uid, $ordering, 'element', 0 ); 
-        $ordering++;
-    }
-    $ordering = 1;
-    foreach my $inflect ( $ref->children('inflect') ) {
-        parseeic( $inflect, $ref_uid, $ordering, 'inflect', 0 );
-        $ordering++;
-    }
-}
-
-
-# === PARSE EXAMPLES ===================================================
-# $linked_uid, $ref_uid NOT in context
-sub parseexample {
-    no warnings 'uninitialized';  
-    $example_uid++;
-    my ( $example, $parent_uid, $exampleordering, $isorderexample ) = @_;
-
-    my $example_type_uid;
-
-    my $example_source_uid = defined $example->att('source') ? 
-       ( $sourcehashval{
-            substr(
-                $example->att('source'), 0,
-                index( $example->att('source'), '/' )
-            )
-        } // 'X'
-      )
-      : 0;
-      
-    my $example_source = $example->att('source') // "";
-    
-    my $example_form_uid = defined $example->att('v') ? 
-       ( $formhashval{ $example->att('v') } // 0 ) : 'NULL';
-
-    if ($isorderexample) {
-        $example_type_uid = ( $exampletypehashval{'order'} // 0 );
-    } else {
-        $example_type_uid = defined $example->att('t') ? 
-      ( $exampletypehashval{ $example->att('t') } // 0 ) : 'NULL';
-    }
-      
-    if ($isorderexample) {
-        push @example_rows,
-            "($parent_uid, NULL, $example_source_uid, '$example_source', $example_form_uid, $exampleordering, $example_type_uid)";
-    } else {
-        push @example_rows,
-            "(NULL, $parent_uid, $example_source_uid, '$example_source', $example_form_uid, $exampleordering, $example_type_uid)";
-    }
-}
-
 
 # === PARSE DOCS =======================================================
 
@@ -1121,31 +853,65 @@ sub sayarray {
 }
 
 sub writesql {
-    my $insertinto  = $_[0];
-    my $arrayed     = $_[1];
-    my $filename    = $_[2];
-    my $writeappend = $_[3];
-    my $rows        = 1;
-    my $arraysize   = @$arrayed;
-    open( SQLFILE, $writeappend, $outputdir . $filename )
-      or die "$! error trying to create or overwrite $SQLFILE";
-    say SQLFILE encode_utf8($insertinto);
-    foreach my $arrayrow (@$arrayed) {
-        if ( $rows % 1000 == 0 ) {
+   my $insertinto  = $_[0];
+   my $arrayed     = $_[1];
+   my $filename    = $_[2];
+   my $writeappend = $_[3];
+   my $rows        = 1;
+   my $arraysize   = @$arrayed;
+   my $filecount   = 1;
+
+   if ( $arraysize > $maxrows ) {
+      my $iterateur = natatime $maxrows, @$arrayed;
+      while ( my @picolino = $iterateur->() ) {
+         $rows        = 1;
+         open( SQLFILE, $writeappend, $outputdir . $filename . "_" . $filecount . ".sql" )
+           or die "$! error trying to create or overwrite $SQLFILE";
+         say SQLFILE encode_utf8($insertinto);
+         foreach my $arrayrow (@picolino) {
+            if ( $rows % 1000 == 0 ) {
+               say SQLFILE encode_utf8( $arrayrow . ";" );
+               say SQLFILE encode_utf8($insertinto)
+                 if ( $arraysize % 1000 != 0 && $rows < $maxrows );
+            }
+            else {
+               if ( $rows == $arraysize ) {
+                  say SQLFILE encode_utf8( $arrayrow . ";" );
+               }
+               else {
+                  say SQLFILE encode_utf8( $arrayrow . "," );
+               }
+            }
+            $rows++;
+         }
+         close SQLFILE;
+         $filecount++;
+      }
+   }
+   else {
+      open( SQLFILE, $writeappend, $outputdir . $filename . ".sql" )
+        or die "$! error trying to create or overwrite $SQLFILE";
+      say SQLFILE encode_utf8($insertinto);
+      foreach my $arrayrow (@$arrayed) {
+         if ( $rows % 1000 == 0 ) {
             say SQLFILE encode_utf8( $arrayrow . ";" );
-            say SQLFILE encode_utf8($insertinto) if ( $arraysize % 1000 != 0 );
-        }
-        else {
-          if ( $rows == $arraysize ) {
-            say SQLFILE encode_utf8($arrayrow . ";");
-          } else {
-            say SQLFILE encode_utf8($arrayrow . ",");
-          }
-        }
-        $rows++;
-    }
-    close SQLFILE;
+            say SQLFILE encode_utf8($insertinto)
+              if ( $arraysize % 1000 != 0 );
+         }
+         else {
+            if ( $rows == $arraysize ) {
+               say SQLFILE encode_utf8( $arrayrow . ";" );
+            }
+            else {
+               say SQLFILE encode_utf8( $arrayrow . "," );
+            }
+         }
+         $rows++;
+      }
+      close SQLFILE;
+   }
 }
+
 
 sub writesql_no_encode {
     my $insertinto  = $_[0];
@@ -1154,7 +920,7 @@ sub writesql_no_encode {
     my $writeappend = $_[3];
     my $rows        = 1;
     my $arraysize   = @$arrayed;
-    open( SQLFILE, $writeappend, $outputdir . $filename )
+    open( SQLFILE, $writeappend, $outputdir . $filename . ".sql" )
       or die "$! error trying to create or overwrite $SQLFILE";
     say SQLFILE $insertinto;
     foreach my $arrayrow (@$arrayed) {
@@ -1175,29 +941,13 @@ sub writesql_no_encode {
 
 # === FINALLY =================================================
 sub writemainsql {
-    writesql( $insert_entry, \@entry_rows, 'entry.sql', '>' );
+    writesql( $insert_entry, \@entry_rows, 'entry', '>' );
     print ' entries';
-    writesql( $insert_linked, \@linked_rows, 'linked.sql', '>' );
-    print ', linked';
-    writesql( $insert_eic, \@eic_rows, 'eic.sql', '>' );
-    print ', eic';
-    writesql( $insert_ref, \@ref_rows, 'ref.sql', '>' );
-    print ', ref\'s';
-    writesql( $insert_example, \@example_rows, 'example.sql', '>' );
-    print ', linked';
-    writesql( $insert_doc, \@doc_rows, 'doc.sql', '>' );
+    writesql( $insert_doc, \@doc_rows, 'doc', '>' );
     print ', docs';
-    writesql( $insert_arnediad, \@arnediad_rows, 'arnediad.sql', '>' );
+    writesql( $insert_relation, \@relation_rows, 'relation', '>' );
     print ' and the rest.';
    
-}
-
-sub entrytype {
-    my ($speech) = @_;
-    if    ( $speech =~ /phone/ )   { return $parenttypehashval{'phonetical'}; }
-    elsif ( $speech =~ /grammar/ ) { return $parenttypehashval{'grammatical'}; }
-    elsif ( $speech =~ /root/ )    { return $parenttypehashval{'root'}; }
-    else                           { return $parenttypehashval{'lexical'}; }
 }
 
 
@@ -1208,12 +958,12 @@ sub loadvariables {
     # === LIST type =================================================
 
     @parenttype = (
-        'arnediad-type',           'class-form-type',
-        'class-form-variant-type', 'doc-type',
-        'eic-type',                'example-type',
-        'inflect-type',            'inflect-variant-type',
-        'linked-type',             'ref-type',
-        'source-type',             'speech-type'
+        'entry-type',      'source-type',
+        'doc-type',        'relation-type',
+        'entity-type',     'entry-class',
+        'class-form-type', 'class-form-variant-type',
+        'inflect-type',    'inflect-variant-type',
+        'speech-type'
     );
 
     @sourcetype = (
@@ -1223,43 +973,46 @@ sub loadvariables {
     );
 
     @doctype = (
-        'before',       'cite',    'class',     'cognate',
-        'deprecations', 'deriv',   'eic',       'element',
-        'grammar',      'inflect', 'linked',    'names',
-        'neologisms',   'notes',   'phonetics', 'phrases',
-        'ref',          'related', 'roots',     'vocabulary',
-        'words'
+        'before',       'cite',      'class',     'cognate',
+        'deprecations', 'deriv',     'eic',       'element',
+        'grammar',      'inflect',   'linked',    'names',
+        'neologisms',   'notes',     'phonetics', 'phrases',
+        'ref',          'related',   'roots',     'vocabulary',
+        'words',        'entrynote', 'entry',     'word'
     );
 
-    @linkedtype = (
-        'before',      'cognate',   'combine', 'deprecated',
-        'deriv',       'element',   'related', 'see-also',
-        'see-further', 'see-notes', 'see',     'word'
+    
+    # used in ENTRY
+    @entryclass = ('lexical', 'grammatical', 'phonetical', 'root', 'unknown', 'private_constr_lex', 'common_constr_lex');
+    
+    # used in ENTRY
+    @entrytype = (
+        'entry',        'element',     'before',        'order-example', 'class',
+        'word-cognate', 'cognate',     'combine',       'deprecated',    'word-deriv',
+        'word-element', 'inflect',     'notes',         'related',       'deriv',
+        'rule',         'see',         'see-also',      'see-further',
+        'see-notes',    'word',        'ref',           'change',
+        'ref-cognate',  'correction',  'ref-deriv',     'rule-start',
+        'rule-example', 'ref-element', 'example',       'inflect',
+        'related-ref'
     );
 
-    @eictype = ( 'element', 'inflect', 'class' );
-
-    @exampletype = ( 'ref', 'deriv', 'inflect', 'order' );
-
-    @reftype = (
-        'change',  'cognate', 'correction',   'deriv',
-        'example', 'ref',     'rule-example', 'rule-start',
-        'rule'
+    # used in RELATION-type
+    @relationtype = (
+        'before',         'change',        'class',          'classform',
+        'classvariant',   'cognate',       'combine',        'correction',   
+        'created',        'deprecated',    'deriv',          'element',
+        'entry',          'entrynote',     'entryspeech',    'example',
+        'inflect',        'inflectform',   'inflectvariant', 'languagenote', 
+        'notes',          'order-example', 'ref-cognate',    'ref-deriv',
+        'ref-element',    'ref',           'related-ref',    'related',
+        'rule-example',   'rule-start',    'rule',           'see-also',
+        'see-further',    'see-notes',     'see',            'word-cognate',
+        'word-deriv',     'word-element',  'word'                 
     );
-
-    @arnediadtype = (
-        'before',            'change',
-        'cognate',           'correction',
-        'created',           'deriv',
-        'eic',               'classform',
-        'classvariant',      'inflectform',
-        'inflectvariant',    'element',
-        'entrynote',         'entryspeech',
-        'inflect',           'languagenote',
-        'linked',            'ref',
-        'related',           'sourcenote'
-    );
-
+    
+    # used in RELATION FROM- and TO-type
+    @entitytype = ( 'entry', 'created', 'type', 'doc', 'language', 'source' );
 
     @classformtype = (
         'strong-I',           'strong-II',
@@ -1443,35 +1196,19 @@ sub loadvariables {
     $insert_created = 'INSERT INTO ' . $schema . 'CREATED (ID, TXT) VALUES ';
     $insert_doc =
       'INSERT INTO ' . $schema . 'DOC (ID, TXT, DOCTYPE_ID) VALUES ';
-    $insert_arnediad =
+    $insert_relation =
         'INSERT INTO '
       . $schema
-      . 'ARNEDIAD (FROM_ID, TO_ID, "ORDERING", ARNEDIAD_TYPE_ID) VALUES ';
-    $insert_eic =
-        'INSERT INTO '
-      . $schema
-      . 'EIC (ID, ENTRY_ID, REF_ID, LANG_ID, SOURCE_ID, SOURCE, FORM_ID, INFLECT_TYPE_ID, INFLECT_VAR_TYPE_ID, MARK, "ORDERING", EIC_TYPE_ID) VALUES ';
+      . 'RELATION (FROM_ID, FROM_TYPE_ID, TO_ID, TO_TYPE_ID, "ORDERING", RELATION_TYPE_ID) VALUES ';
     $insert_entry =
         'INSERT INTO '
       . $schema
-      . 'ENTRY (ID, FORM_ID, LANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, CREATED_ID, RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, ORTHO_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ENTRY_TYPE_ID) VALUES ';
-    $insert_example =
-        'INSERT INTO '
-      . $schema
-      . 'EXAMPLE (LINKED_ID, REF_ID, SOURCE_ID, SOURCE, FORM_ID, "ORDERING", EXAMPLE_TYPE_ID) VALUES ';
+      . 'ENTRY (ID, FORM_ID, LANGUAGE_ID, RLANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, SOURCE_ID, "SOURCE", RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, ORTHO_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ENTRY_CLASS_ID, ENTRY_TYPE_ID) VALUES ';
     $insert_form = 'INSERT INTO ' . $schema . 'FORM (ID, TXT) VALUES ';
     $insert_gloss =
       'INSERT INTO ' . $schema . 'GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
     $insert_language =
       'INSERT INTO ' . $schema . 'LANGUAGE (ID, NAME, LANG, PARENT_ID) VALUES ';
-    $insert_linked =
-        'INSERT INTO '
-      . $schema
-      . 'LINKED (ID, ENTRY_ID, LANG_ID, FORM_ID, MARK, "ORDERING", LINKED_TYPE_ID) VALUES ';
-    $insert_ref =
-        'INSERT INTO '
-      . $schema
-      . '(ID, REF_ID, ENTRY_ID, GLOSS_ID, LANG_ID, FORM_ID, SOURCE_ID, SOURCE, FORM1_ID, FORM2_ID, FORM3_ID, MARK, "ORDERING", REF_TYPE_ID) VALUES ';
     $insert_source =
         'INSERT INTO '
       . $schema

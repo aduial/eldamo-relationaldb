@@ -999,7 +999,6 @@ INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES
 (1081, 'to Please', 16),
 (1082, 'Please in Polite Phrases', 16),
 (1083, 'Joy', 16);
-COMMIT;
 INSERT INTO CAT (ID, LABEL, PARENT_ID) VALUES 
 (1084, 'Glad, Joyful', 16),
 (1085, 'Happy; Happiness', 16),
