@@ -1,4 +1,235 @@
--- beforeview source
+-- lexicon_changes source
+
+CREATE VIEW lexicon_changes AS
+SELECT
+    e1.ID entry_id
+    , f4.TXT ||
+    CASE
+        WHEN g4.TXT IS NULL THEN ''
+        ELSE ' "' || g4.TXT || '"'
+    END || ' ' || f2.TXT ||
+    CASE
+        WHEN g2.TXT IS NULL THEN ''
+        ELSE ' "' || g2.TXT || '"'
+    END || ' ' || (
+        s4.PREFIX || '/' || REPLACE(
+            Group_concat(
+                DISTINCT ltrim(
+                    substr(
+                        e4.SOURCE
+                        , (
+                            instr(
+                                e4.SOURCE
+                                , '/'
+                            ) + 1
+                        )
+                        , (
+                            instr(
+                                e4.SOURCE
+                                , '.'
+                            ) - (
+                                (
+                                    instr(
+                                        e4.SOURCE
+                                        , '/'
+                                    ) + 1
+                                )
+                            )
+                        )
+                    )
+                    , 0
+                )
+            )
+            , ','
+            , ', '
+        )
+    ) related
+    , f4.TXT form1
+    , g4.TXT gloss1
+    , f2.TXT form2
+    , g2.TXT gloss2
+    , (
+        s4.PREFIX || '/' || REPLACE(
+            Group_concat(
+                DISTINCT ltrim(
+                    substr(
+                        e4.SOURCE
+                        , (
+                            instr(
+                                e4.SOURCE
+                                , '/'
+                            ) + 1
+                        )
+                        , (
+                            instr(
+                                e4.SOURCE
+                                , '.'
+                            ) - (
+                                (
+                                    instr(
+                                        e4.SOURCE
+                                        , '/'
+                                    ) + 1
+                                )
+                            )
+                        )
+                    )
+                    , 0
+                )
+            )
+            , ','
+            , ', '
+        )
+    ) AS sources
+FROM
+    ENTRY e1
+JOIN ENTRY e2 ON
+    e2.PARENT_ID = e1.ID
+JOIN FORM f2 ON
+    f2.ID = e2.FORM_ID
+LEFT OUTER JOIN GLOSS g2 ON
+    g2.id = e2.GLOSS_ID
+JOIN ENTRY e3 ON
+    e3.FORM_ID = e2.FORM_ID
+    AND e3.SOURCE = e2.SOURCE
+JOIN ENTRY e4 ON
+    e4.ID = e3.PARENT_ID
+JOIN FORM f4 ON
+    f4.id = e4.FORM_ID
+JOIN SOURCE s4 ON
+    s4.ID = e4.SOURCE_ID
+LEFT OUTER JOIN GLOSS g4 ON
+    g4.id = e4.GLOSS_ID
+WHERE
+    e1.PARENT_ID IS NULL
+    AND e3.ENTRY_TYPE_ID = 122
+GROUP BY
+    f4.ID
+    , g4.ID;
+
+
+-- lexicon_cognates source
+
+CREATE VIEW lexicon_cognates AS
+SELECT DISTINCT e1.ID entry_id
+     , l5.LANG language
+     , f5.TXT form
+     , g5.TXT gloss
+     , REPLACE(group_concat(substr( e4.source ,  0, instr(e4.source , '.') ) ), ',', ', ') sources
+FROM ENTRY e1 
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
+JOIN ENTRY e3 ON e3.FORM_ID = e2.FORM_ID AND e3.SOURCE = e2.SOURCE
+JOIN ENTRY e4 ON e3.PARENT_ID = e4.ID 
+JOIN ENTRY e5 ON e4.PARENT_ID = e5.ID 
+JOIN LANGUAGE l5 ON e5.LANGUAGE_ID = l5.ID 
+JOIN FORM f5 ON e5.FORM_ID = f5.ID 
+LEFT OUTER JOIN GLOSS g5 ON e5.GLOSS_ID = g5.ID 
+WHERE (e1.ENTRY_TYPE_ID = 100 OR e1.ENTRY_TYPE_ID = 120) -- entry OR word
+AND e2.ENTRY_TYPE_ID = 121 --ref
+AND e3.ENTRY_TYPE_ID = 106 -- cognate
+GROUP BY e5.ID
+UNION
+SELECT e1.ID entry_id
+     , l3.LANG language
+     , f3.TXT form
+     , g3.TXT gloss
+     , '[word cognate]' sources
+FROM ENTRY e1
+JOIN ENTRY e2 ON e2.FORM_ID = e1.FORM_ID AND e2.LANGUAGE_ID  = e1.LANGUAGE_ID 
+JOIN ENTRY e3 ON e3.ID = e2.PARENT_ID 
+JOIN LANGUAGE l3 ON e3.LANGUAGE_ID = l3.ID 
+JOIN FORM f3 ON e3.FORM_ID = f3.ID 
+LEFT OUTER JOIN GLOSS g3 ON e3.GLOSS_ID = g3.ID
+WHERE (e1.ENTRY_TYPE_ID = 100 OR e1.ENTRY_TYPE_ID = 120)  
+AND e2.ENTRY_TYPE_ID = 106;
+
+-- lexicon_glosses source
+
+CREATE VIEW lexicon_glosses AS
+SELECT ewd.ID entry_id
+, g.TXT gloss
+, (s.PREFIX || '/' || Replace(Group_concat(DISTINCT ltrim(substr(erf.SOURCE, (instr(erf.SOURCE, '/') + 1), (instr(erf.SOURCE, '.') - ((instr(erf.SOURCE, '/') + 1)))), 0)
+), ',', ', ')) AS reference
+FROM ENTRY ewd
+JOIN ENTRY erf ON erf.PARENT_ID  = ewd.ID 
+JOIN SOURCE s ON s.ID = erf.SOURCE_ID 
+JOIN GLOSS g ON erf.GLOSS_ID = g.ID 
+WHERE erf.ENTRY_TYPE_ID = 121
+GROUP BY g.ID
+ORDER BY erf.ID;
+
+-- lexicon_header source
+
+CREATE VIEW lexicon_header AS
+SELECT e.ID entry_id, f.TXT, l.LANG, es.speechtypes, c.LABEL 
+FROM ENTRY e 
+JOIN FORM f ON e.FORM_ID = f.ID 
+JOIN entry_speech es ON es.entry = e.id
+JOIN LANGUAGE l ON e.LANGUAGE_ID = l.ID 
+LEFT OUTER JOIN GLOSS g ON e.GLOSS_ID = g.ID 
+LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID 
+WHERE e.ENTRY_CLASS_ID = 600;
+
+
+-- lexicon_references source
+
+CREATE VIEW lexicon_references AS
+SELECT entry_id,
+group_concat(sourcerefs, '; ') AS 'references'
+FROM (
+SELECT ewd.ID entry_id
+, erf.ID eref_id
+, (s.PREFIX || '/' || Replace(Group_concat(DISTINCT ltrim(substr(erf.SOURCE, (instr(erf.SOURCE, '/') + 1), (instr(erf.SOURCE, '.') - ((instr(erf.SOURCE, '/') + 1)))), 0)
+), ',', ', ')) AS sourcerefs
+FROM ENTRY ewd
+JOIN ENTRY erf ON erf.PARENT_ID = ewd.ID 
+JOIN SOURCE s ON s.ID = erf.SOURCE_ID 
+WHERE erf.ENTRY_TYPE_ID = 121
+GROUP BY ewd.ID, erf.SOURCE_ID ) entry_refs
+GROUP BY entry_refs.entry_id;
+
+-- lexicon_related source
+
+CREATE VIEW lexicon_related AS
+SELECT e1.ID entry_id
+     , f4.TXT || CASE WHEN g4.TXT IS NULL THEN '' ELSE ' "' || g4.TXT || '"' END || ' ' || ed3.doc || ' ' || f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END
+     , f4.TXT form1
+     , g4.TXT gloss1
+     , ed3.doc doc
+     , f2.TXT form2
+     , g2.TXT gloss2
+FROM ENTRY e1
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
+JOIN FORM f2 ON f2.ID = e2.FORM_ID 
+LEFT OUTER JOIN GLOSS g2 ON g2.id = e2.GLOSS_ID
+JOIN ENTRY e3 ON e3.FORM_ID = e2.FORM_ID AND e3.SOURCE = e2.SOURCE 
+LEFT OUTER JOIN entry_doc ed3 ON e3.ID = ed3.entry_id 
+JOIN ENTRY e4 ON e4.ID = e3.PARENT_ID 
+JOIN FORM f4 ON f4.id = e4.FORM_ID
+LEFT OUTER JOIN GLOSS g4 ON g4.id = e4.GLOSS_ID
+WHERE e3.ENTRY_TYPE_ID = 113
+AND e1.PARENT_ID IS NULL 
+UNION ALL
+SELECT e1.ID entry_id
+     , f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END || ' ' || ed3.doc || ' ' || f3.TXT || CASE WHEN g3.TXT IS NULL THEN '' ELSE ' "' || g3.TXT || '"' END
+     , f2.TXT form1 
+     , g2.TXT gloss1
+     , ed3.doc doc
+     , f3.TXT form2
+     , g3.TXT gloss2
+FROM ENTRY e1
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
+JOIN FORM f2 ON f2.ID = e2.FORM_ID 
+LEFT OUTER JOIN GLOSS g2 ON g2.id = e2.GLOSS_ID
+JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID 
+JOIN FORM f3 ON f3.ID = e3.FORM_ID 
+LEFT OUTER JOIN GLOSS g3 ON g3.ID = e3.GLOSS_ID 
+LEFT OUTER JOIN entry_doc ed3 ON e3.ID = ed3.entry_id 
+WHERE e3.ENTRY_TYPE_ID = 113
+AND e1.PARENT_ID IS NULL;
+
+
+-- simplexicon source
 
 CREATE VIEW simplexicon AS
 SELECT e.ID id
@@ -18,370 +249,174 @@ JOIN gloss g ON e.GLOSS_ID = g.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
 JOIN TYPE t1 ON e.ENTRY_TYPE_ID = t1.ID 
-JOIN TYPE t2 ON e.ENTRY_CLASS_ID = t2.ID 
+JOIN TYPE t2 ON e.ENTRY_CLASS_ID = t2.ID;
+
+-- entry_doc source
+
+CREATE VIEW entry_doc AS
+SELECT r.FROM_ID entry_id, d.ID doc_id, d.TXT doc, t.TXT doctype
+FROM RELATION r
+JOIN DOC d ON r.TO_ID = d.ID 
+JOIN TYPE t ON t.ID = d.DOCTYPE_ID 
+WHERE r.FROM_TYPE_ID = 500
+AND r.TO_TYPE_ID = 503;
+
+-- entry_speech source
+
+CREATE VIEW entry_speech AS
+SELECT e.ID entry
+     , Group_concat(st.TXT) AS speechtypes
+     , e.ENTRY_CLASS_ID
+     , e.ENTRY_TYPE_ID
+FROM RELATION r
+JOIN ENTRY e ON e.ID = r.FROM_ID 
+JOIN speech_type st ON r.TO_ID = st.ID 
+WHERE r.FROM_TYPE_ID = 500
+AND r.TO_TYPE_ID = 502
+GROUP BY e.ID;
+
+-- related_to_root source
+
+CREATE VIEW related_to_root AS
+SELECT e1.ID entry1_id
+     , t1.TXT type1
+     , e1.ENTRY_TYPE_ID type1_id
+     , e2.ID entry2_id
+     , t2.TXT type2
+     , e2.ENTRY_TYPE_ID type2_id
+     , g2.TXT root
+     , root.ID root_id
+FROM ENTRY e1 
+JOIN ENTRY e2 
+ON e1.SOURCE = e2.SOURCE
+AND e1.FORM_ID = e2.FORM_ID 
+JOIN TYPE t1 ON t1.ID = e1.ENTRY_TYPE_ID
+JOIN TYPE t2 ON t2.ID = e2.ENTRY_TYPE_ID
+JOIN ENTRY root ON e2.PARENT_ID = root.ID 
+JOIN GLOSS g2 ON g2.ID = e2.GLOSS_ID 
+WHERE e1.ID != e2.ID
+AND e1.SOURCE != ''
+AND e2.SOURCE != ''
+AND root.ENTRY_CLASS_ID = 603;
+
+-- related_form_source source
+
+CREATE VIEW related_form_source AS
+SELECT e1.ID entry1_id
+     , e1.ENTRY_TYPE_ID type1_id
+     , t1.TXT type1
+     , e2.ID entry2_id
+     , e2.ENTRY_TYPE_ID type2_id
+     , t2.TXT type2
+FROM ENTRY e1 
+JOIN ENTRY e2 
+ON e1.SOURCE = e2.SOURCE
+AND e1.FORM_ID = e2.FORM_ID 
+JOIN TYPE t1 ON t1.ID = e1.ENTRY_TYPE_ID
+JOIN TYPE t2 ON t2.ID = e2.ENTRY_TYPE_ID
+WHERE e1.ID != e2.ID
+AND e1.SOURCE != ''
+AND e2.SOURCE != '';
+
+-- v_entry source
+
+CREATE VIEW v_entry AS
+SELECT e.ID
+     , e.PARENT_ID
+     , e.ENTRY_TYPE_ID
+     , e.LANGUAGE_ID
+     , e.FORM_ID
+     , e.GLOSS_ID
+     , e.SOURCE
+     , CASE WHEN l.LANG IS NULL THEN '' ELSE l.LANG || ' || ' END || f.TXT || CASE WHEN e.GLOSS_ID IS NULL THEN '' ELSE ' || ' || g.TXT END short
+     , CASE WHEN l.LANG IS NULL THEN '' ELSE l.LANG || ' || ' END || f.TXT || CASE WHEN e.GLOSS_ID IS NULL THEN '' ELSE ' || ' || g.TXT END || CASE WHEN e.SOURCE IS '' THEN '' ELSE ' || ' || e.SOURCE END medium
+     , CASE WHEN l.LANG IS NULL THEN '' ELSE l.LANG || ' || ' END || f.TXT || CASE WHEN e.GLOSS_ID IS NULL THEN '' ELSE ' || ' || g.TXT END || ' || ' || t1.TXT || CASE WHEN t2.TXT IS NULL THEN '' ELSE ' || ' || t2.TXT END types
+     , l.LANG language
+     , f.TXT form
+     , g.TXT gloss
+     , t1.TXT entrytype
+     , t2.TXT entryclass
+FROM ENTRY e
+JOIN TYPE t1 ON t1.ID = e.ENTRY_TYPE_ID 
+LEFT OUTER JOIN TYPE t2 ON t2.ID = e.ENTRY_CLASS_ID 
+LEFT OUTER JOIN LANGUAGE l ON l.ID = e.LANGUAGE_ID 
+JOIN FORM f ON f.id = e.FORM_ID
+LEFT OUTER JOIN GLOSS g ON g.id = e.GLOSS_ID;
 
 
--- classview source
+-- class_form_type source
 
-CREATE VIEW classview AS
-SELECT 	l.entry_id 		entryid, 
-			l.mark 			mark,  
-			lg.ordering 	lgorder, 
-			g.txt 			grammartxt, 
-			t2.txt 			grammartypetxt, 
-			g.id 				grammarid FROM linked l
-JOIN type t ON l.linkedtype_id = t.id
-JOIN linked_grammar lg ON l.id = lg.linked_id
-JOIN grammar g ON g.id = lg.grammar_id
-JOIN type t2 ON lg.grammartype_id = t2.id
-WHERE t.txt = 'class'
-ORDER BY l.entry_id, lg.ordering, t2.id ASC;
+CREATE VIEW class_form_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'class-form-type';
 
+-- class_form_variant_type source
 
--- cognateview source
+CREATE VIEW class_form_variant_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'class-form-variant-type';
 
-CREATE VIEW cognateview AS
-SELECT  l.entry_id        entryidfrom, 
-        e2.id             entryidto, 
-        l.ref_id          refidfrom, 
-        r.id              refidto, 
-        ln.name           languageto, 
-        f.txt             formtxt, 
-        s.name            sourcename, 
-        s.prefix          sourceprefix, 
-        l.source          sourcestring,
-        t2.txt            sourcetypetxt FROM linked l
-JOIN type t ON l.linkedtype_id = t.id
-JOIN linked_form lf ON l.id = lf.linked_id
-LEFT OUTER JOIN ref r ON lf.form_id = r.form_id AND l.source_id = r.source_id
-LEFT OUTER JOIN entry e2 ON e2.form_id = lf.form_id AND e2.language_id = l.to_language_id
-JOIN form f ON f.id = lf.form_id
-LEFT OUTER JOIN source s ON l.source_id = s.id
-LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
-LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
-WHERE t.txt = 'cognate'
-ORDER BY l.entry_id, l.ref_id, e2.id, r.id ASC;
+-- doc_type source
 
+CREATE VIEW doc_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'doc-type';
 
--- correctionview source
+-- entity_type source
 
-CREATE VIEW correctionview AS
-SELECT  l.ref_id          refidfrom,
-        r.id              refidto,
-        f.txt             formtxt,
-        s.name            sourcename,
-        s.prefix          sourceprefix,
-        l.source          sourcestring,
-        t2.txt            sourcetypetxt FROM linked l
-                                                 JOIN type t ON l.linkedtype_id = t.id
-                                                 JOIN linked_form lf ON l.id = lf.linked_id
-                                                 JOIN form f ON f.id = lf.form_id
-                                                 JOIN ref r ON lf.form_id = r.form_id AND l.source_id = r.source_id
-                                                 LEFT OUTER JOIN source s ON l.source_id = s.id
-                                                 LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
-WHERE t.txt = 'correction'
-ORDER BY l.ref_id, f.id, r.id ASC;
+CREATE VIEW entity_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'entity-type';
 
+-- entry_class source
 
--- derivview source
+CREATE VIEW entry_class AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'entry-class';
 
-CREATE VIEW derivview AS
-SELECT  l.entry_id        entryidfrom,
-        e2.id             entryidto,
-        l.ref_id          refidfrom,
-        r.id              refidto,
-        ln.name           languageto,
-        f.txt             formtxt,
-        s.name            sourcename,
-        s.prefix          sourceprefix,
-        l.source          sourcestring,
-        t2.txt            sourcetypetxt,
-        g1.TXT            entrygloss,
-        g2.TXT            refgloss,
-        lf.ordering       lforder FROM linked l
-                                           JOIN type t ON l.linkedtype_id = t.id
-                                           JOIN linked_form lf ON l.id = lf.linked_id
-                                           LEFT OUTER JOIN ref r ON lf.form_id = r.form_id AND l.source_id = r.source_id
-                                           LEFT OUTER JOIN entry e2 ON e2.form_id = lf.form_id AND e2.language_id = l.to_language_id
-                                           JOIN form f ON f.id = lf.form_id
-                                           LEFT OUTER JOIN source s ON l.source_id = s.id
-                                           LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
-                                           LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
-                                           LEFT OUTER JOIN GLOSS g1 ON e2.GLOSS_ID = g1.ID
-                                           LEFT OUTER JOIN GLOSS g2 ON r.GLOSS_ID = g2.ID
-WHERE t.txt = 'deriv'
-GROUP BY formtxt
-ORDER BY l.entry_id, l.ref_id, lf.ordering, e2.id, r.id ASC;
+-- entry_type source
 
+CREATE VIEW entry_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'entry-type';
 
--- elementview source
+-- inflect_type source
 
-CREATE VIEW elementview AS
-SELECT  l.entry_id        entryidfrom,
-        e2.id             entryidto,
-        l.ref_id          refidfrom,
-        r.id              refidto,
-        ln.name           languageto,
-        f.txt             formtxt,
-        g.txt             grammartxt,
-        s.name            sourcename,
-        s.prefix          sourceprefix,
-        l.source          sourcestring,
-        t2.txt            sourcetypetxt FROM linked l
-                                                 JOIN type t ON l.linkedtype_id = t.id
-                                                 JOIN linked_form lf ON l.id = lf.linked_id
-                                                 LEFT OUTER JOIN ref r ON lf.form_id = r.form_id AND l.source_id = r.source_id
-                                                 LEFT OUTER JOIN entry e2 ON e2.form_id = lf.form_id AND e2.language_id = l.to_language_id
-                                                 JOIN form f ON f.id = lf.form_id
-                                                 LEFT OUTER JOIN source s ON l.source_id = s.id
-                                                 LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
-                                                 LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
-                                                 LEFT OUTER JOIN linked_grammar lg ON lg.linked_id = l.id
-                                                 LEFT OUTER JOIN grammar g ON g.id = lg.grammar_id
-WHERE t.txt = 'element'
-ORDER BY l.entry_id, l.ref_id, e2.id, r.id ASC;
+CREATE VIEW inflect_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'inflect-type';
 
+-- inflect_variant_type source
 
--- entrynoteview source
+CREATE VIEW inflect_variant_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'inflect-variant-type';
 
-CREATE VIEW entrynoteview as
-select e.id entry_id, ed.ORDERING ordering, d.TXT txt from entry e
-                                                               join entry_doc ed on e.ID = ed.ENTRY_ID
-                                                               join doc d on ed.DOC_ID = d.ID
-                                                               join type t on d.DOCTYPE_ID = t.ID
-where t.TXT = 'notes'
-order by ed.ORDERING;
+-- source_type source
 
+CREATE VIEW source_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'source-type';
 
--- inflectview source
+-- speech_type source
 
-CREATE VIEW inflectview AS
-SELECT  l.entry_id        entryidfrom,
-        l.ref_id          refidfrom,
-        f.txt             formtxt,
-        lg.ordering       lgorder,
-        g.txt             inflection,
-        tgram.txt         inflecttypetxt FROM linked l
-                                                  JOIN type t ON l.linkedtype_id = t.id
-                                                  LEFT OUTER JOIN linked_form lf ON lf.linked_id = l.id
-                                                  LEFT OUTER JOIN form f ON f.id = lf.form_id
-                                                  LEFT OUTER JOIN linked_grammar lg ON lg.linked_id = l.id
-                                                  LEFT OUTER JOIN grammar g ON g.id = lg.grammar_id
-                                                  LEFT OUTER JOIN type tgram ON lg.grammartype_id = tgram.id
-WHERE t.txt = 'inflect'
-ORDER BY l.entry_id, l.ref_id, tgram.id, lg.ordering ASC;
+CREATE VIEW speech_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'speech-type';
 
+-- relation_type source
 
--- lexicon source
-
-CREATE VIEW lexicon AS SELECT  e.id entry_id,
-                               f.txt form,
-                               l.mnemonic lang_mnemonic,
-                               l.name lang_name,
-                               g.txt gloss,
-                               c.label cat,
-                               e.tengwar tengwar,
-                               e.mark mark,
-                               e.eldamo_pageid eldamo_pageid,
-                               e.orderfield orderfield,
-                               e.parent_id parent_id,
-                               e.ordering ordering,
-                               e.entrytype_id entrytype_id,
-                               t.txt entry_type
-                       FROM ENTRY e
-                                LEFT OUTER JOIN FORM f
-                                                ON e.form_id = f.id
-                                LEFT OUTER JOIN LANGUAGE l
-                                                ON e.language_id = l.id
-                                LEFT OUTER JOIN GLOSS g
-                                                ON e.gloss_id = g.id
-                                LEFT OUTER JOIN CAT c
-                                                ON e.cat_id = c.id
-                                LEFT OUTER JOIN TYPE t
-                                                ON e.entrytype_id = t.id;
-
-
--- refcognateview source
-
-CREATE VIEW refcognateview AS SELECT DISTINCT l.entry_id 		        entry_id,
-                                              Upper(lang.mnemonic)
-                                                  || '.'                                           lang,
-                                              r1.mark
-                                                  || f.txt                                         form,
-                                              COALESCE(g1.txt, g2.txt)                         gloss,
-                                              Group_concat(DISTINCT COALESCE (r1.source
-                                                                                  || ' ('
-                                                                                  || f11.txt
-                                                                                  || ')', r2.source
-                                                                                  || ' ('
-                                                                                  || f22.txt
-                                                                                  || ')')) sources
-                              FROM   linked l
-                                         LEFT OUTER JOIN linked_form lf
-                                                         ON lf.linked_id = l.id
-                                         JOIN form f
-                                              ON f.id = lf.form_id
-                                         JOIN ref r1
-                                              ON r1.source = l.source
-                                         JOIN entry e
-                                              ON e.id = r1.entry_id
-                                         LEFT OUTER JOIN gloss g1
-                                                         ON e.gloss_id = g1.id
-                                         JOIN language lang
-                                              ON lang.id = e.language_id
-                                         JOIN type t
-                                              ON l.linkedtype_id = t.id
-                                         JOIN ref r2
-                                              ON r2.entry_id = e.id
-                                         LEFT OUTER JOIN gloss g2
-                                                         ON r2.gloss_id = g2.id
-                                         JOIN form f11
-                                              ON r1.form_id = f11.id
-                                         JOIN form f22
-                                              ON r2.form_id = f22.id
-                              WHERE  t.txt = 'cognate'
-                                AND r2.gloss_id IS NOT NULL
-                                AND NOT EXISTS (SELECT *
-                                                FROM   linked l2
-                                                WHERE  l2.ref_id = r2.id)
-                                AND r2.id != r1.id
-                              GROUP  BY l.entry_id,
-                                        form;
-
-
--- refderivview source
-
-CREATE VIEW refderivview AS SELECT l.entry_id AS entry_id,
-                                   f.txt      AS form,
-                                   Replace(Replace(Group_concat(DISTINCT g.txt), ',', '; '), ';  ', '; ') AS glosses,
-                                   Replace(Group_concat(DISTINCT l.source), ',', '; ')                    AS sources
-                            FROM   linked l
-                                       JOIN   linked_form lf
-                                              ON     lf.linked_id = l.id
-                                       JOIN   form f
-                                              ON     f.id = lf.form_id
-                                       LEFT JOIN ref r
-                                                 ON     r.source = l.source AND r.form_id = f.id
-                                       JOIN gloss g
-                                            ON     r.gloss_id = g.id
-                                       JOIN type t
-                                            ON     l.linkedtype_id = t.id
-                            WHERE  t.txt = 'deriv'
-                              AND    r.entry_id != l.entry_id
-                            GROUP  BY l.entry_id, form;
-
-
--- refelementview source
-
-CREATE VIEW refelementview AS
-SELECT e1.id entry_id
-     , upper(lg.mnemonic) lang
-     , e2f.TXT form
-     , group_concat(DISTINCT COALESCE(e2g.txt, rg.txt)) gloss
-     , ' ✧ ' || REPLACE(group_concat(DISTINCT r.source || CASE WHEN LOWER(rf.txt) = LOWER(e2f.TXT)
-                                                                   THEN '' ELSE ' (' || rf.txt || ')' END),',', '; ') sources
-FROM entry e1
-         JOIN form f1 on e1.form_id = f1.id
-         JOIN form f2 on f2.normaltxt = f1.normaltxt
-         JOIN linked_form lf ON f2.id = lf.FORM_ID
-         JOIN linked l ON l.id = lf.LINKED_ID
-         LEFT OUTER JOIN ref r ON l.REF_ID = r.ID
-         LEFT OUTER JOIN form rf ON rf.ID = r.FORM_ID
-         LEFT OUTER JOIN gloss rg ON rg.ID = r.GLOSS_ID
-         JOIN entry e2 ON l.ENTRY_ID = e2.ID
-         LEFT OUTER JOIN form e2f ON e2f.ID = e2.FORM_ID
-         LEFT OUTER JOIN gloss e2g ON e2g.ID = e2.GLOSS_ID
-         JOIN language lg ON lg.ID = e2.LANGUAGE_ID
-         JOIN type t ON l.LINKEDTYPE_ID = t.ID
-WHERE t.txt = 'element'
-GROUP BY e1.id, form;
-
-
--- refglossview source
-
-CREATE VIEW refglossview AS
-SELECT r.entry_id entry_id, 
-       '"' || g.txt || '" ✧ ' || Group_Concat(r.source, '; ') refgloss 
-FROM ref r  
-JOIN gloss g ON g.id = r.gloss_id  
-AND NOT EXISTS (select * FROM linked l WHERE l.ref_id = r.id) 
-GROUP BY LOWER(g.txt);
-
-
--- refinflectview source
-
-CREATE VIEW refinflectview AS
-SELECT r.entry_id entry_id, f.txt form, gr.txt grammar, gl.txt gloss, ' ✧ ' || Group_Concat(r.source, '; ') sources FROM ref r
-LEFT OUTER JOIN gloss gl ON gl.id = r.gloss_id
-JOIN form f ON f.id = r.form_id
-JOIN linked l ON l.REF_ID = r.ID
-LEFT OUTER JOIN linked_grammar lg ON lg.LINKED_ID = l.ID
-JOIN grammar gr ON gr.ID = lg.GRAMMAR_ID
-JOIN type t2 ON lg.GRAMMARTYPE_ID = t2.id
-JOIN type t ON l.LINKEDTYPE_ID = t.ID
-WHERE t.txt = 'inflect'
-GROUP BY LOWER(f.txt);
-
-
--- relatedview source
-
-CREATE VIEW relatedview AS
-SELECT  l.entry_id        entryidfrom,
-        e2.id             entryidto,
-        l.ref_id          refidfrom,
-        r.id              refidto,
-        ln.name           languageto,
-        l.ordering        lorder,
-        f.txt             formtxt,
-        s.name            sourcename,
-        s.prefix          sourceprefix,
-        l.source          sourcestring,
-        t2.txt            sourcetypetxt FROM linked l
-                                                 JOIN type t ON l.linkedtype_id = t.id
-                                                 JOIN linked_form lf ON l.id = lf.linked_id
-                                                 LEFT OUTER JOIN ref r ON lf.form_id = r.form_id AND l.source_id = r.source_id
-                                                 LEFT OUTER JOIN entry e2 ON e2.form_id = lf.form_id AND e2.language_id = l.to_language_id
-                                                 JOIN form f ON f.id = lf.form_id
-                                                 LEFT OUTER JOIN source s ON l.source_id = s.id
-                                                 LEFT OUTER JOIN type t2 ON s.sourcetype_id = t2.id
-                                                 LEFT OUTER JOIN language ln ON l.to_language_id = ln.id
-WHERE t.txt = 'related'
-ORDER BY l.entry_id, l.ref_id, l.ordering, e2.id, r.id ASC;
-
-
--- simplexicon source
-
-CREATE VIEW simplexicon AS SELECT
-      e.id                        entry_id,
-      e.mark                      mark,
-      f.txt                       form,
-      e.language_id               form_lang_id,
-      l.MNEMONIC 				  form_lang_abbr,
-      ifnull(g.txt, '--')      as gloss,
-      ifnull(g.language_id, 0) as gloss_lang_id,
-      ifnull(c.label, '--')    as cat,
-      ifnull(sf.txt, '--')     as stem,
-      e.entrytype_id              entrytype_id
-FROM  entry e
-JOIN  form f
-ON    e.form_id = f.id
-JOIN  language l 
-ON    e.LANGUAGE_ID = l.ID 
-LEFT OUTER JOIN gloss g
-ON    e.gloss_id = g.id
-LEFT OUTER JOIN cat c
-ON    e.cat_id = c.id
-LEFT OUTER JOIN form sf
-ON    e.stem_form_id = sf.id
-WHERE e.entrytype_id = 1033;
-
-
--- speechformview source
-
-CREATE VIEW speechformview AS SELECT DISTINCT lg.entry_id, g.txt FROM
-    GRAMMAR g
-        JOIN LINKED_GRAMMAR lg
-             ON g.ID = lg.GRAMMAR_ID
-        JOIN TYPE t
-             ON lg.GRAMMARTYPE_ID = t.ID
-                              WHERE t.TXT = 'speechform';
+CREATE VIEW relation_type AS
+SELECT t_child.ID, t_child.TXT FROM TYPE t_child
+JOIN TYPE t_parent ON t_child.PARENT_ID = t_parent.ID 
+WHERE t_parent.TXT = 'relation-type';

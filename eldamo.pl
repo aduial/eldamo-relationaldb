@@ -646,7 +646,7 @@ sub parseword {
     push @entry_uid_stack, $entry_uid;
 
     my $uid        = $entry_uid_stack[-1];
-    my $parent_uid = $entry_uid_stack[-2];
+    my $parent_uid = ( $entry_uid_stack[-2] // 'NULL' );
 
     my ( $element, $order, $type ) = @_;
 
@@ -662,19 +662,10 @@ sub parseword {
     my $doctype_uid = ( $entitytypehashval{'doc'} // 'NULL' );
     my $typetype_uid = ( $entitytypehashval{'type'} // 'NULL' );
     my $createdtype_uid = ( $entitytypehashval{'created'} // 'NULL' );
-
-    # register RELATION
-    if ( defined $parent_uid ) {
-        $relationtype_uid = ( $relationtypehashval{$type} // $type );
-        #$relationtype_uid = ( $relationtypehashval{$type} // 'NULL' );
-        push @relation_rows, "($parent_uid, $entrytype_uid, $uid, $entrytype_uid, $order, $relationtype_uid)";
-    }
-    
+  
+      # create DOC & register RELATION 
     $relationtype_uid = ( $relationtypehashval{'entrynote'} // 'NULL' );
-    
-    # create DOC & register RELATION 
     if ($element->text ne "" && $type ne "#CDATA"){
-    
         if (defined $latestdoc && substr($element->text, 0, 100) eq $latestdoc){
            #say "already exists";
            #say $latestdoc;
@@ -682,7 +673,6 @@ sub parseword {
            pop @doc_rows; # remove last DOC
            pop @relation_rows; # remove last RELATION
         }
-    
         $latestdoc = substr($element->text, 0, 100); # new latest doc var
         parsedoc( $element, $type );    # call parsedoc first to set uid
         push @relation_rows, "($uid, $entrytype_uid, $doc_uid, $doctype_uid, 1, $relationtype_uid)";
@@ -747,13 +737,14 @@ sub parseword {
     }
 
     push @entry_rows,
-"($uid, $entry_form_uid, $entry_lang_uid, $entry_rlang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_source_uid, '$entry_source', $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, $entry_orthoform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_class_uid, $entry_type_uid)";
+"($uid, $parent_uid, $entry_form_uid, $entry_lang_uid, $entry_rlang_uid, $entry_gloss_uid, $entry_ngloss_uid, $entry_cat_uid, $entry_source_uid, '$entry_source', $entry_ruleform_uid, $entry_fromform_uid, $entry_stemform_uid, $entry_orthoform_uid, '$entry_tengwar', '$entry_mark', '$entry_neoversion', '$entry_eldamopageid', '$entry_orderfield', $entry_class_uid, $entry_type_uid)";
 
     
     # ==== speech RELATION ====
     $relationtype_uid = ( $relationtypehashval{'entryspeech'} // 'NULL' );
     $order = 1;
     foreach my $speech ( split( ' ', $element->att('speech') ) ) {
+        # say "More speech for $entry_uid !" if ($order > 1);
         my $speech_uid = ( $speechtypehashval{$speech} // 'NULL' );
         push @relation_rows, "($uid, $entrytype_uid, $speech_uid, $typetype_uid, $order, $relationtype_uid)";
         $order++;
@@ -1203,7 +1194,7 @@ sub loadvariables {
     $insert_entry =
         'INSERT INTO '
       . $schema
-      . 'ENTRY (ID, FORM_ID, LANGUAGE_ID, RLANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, SOURCE_ID, "SOURCE", RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, ORTHO_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ENTRY_CLASS_ID, ENTRY_TYPE_ID) VALUES ';
+      . 'ENTRY (ID, PARENT_ID, FORM_ID, LANGUAGE_ID, RLANGUAGE_ID, GLOSS_ID, NGLOSS_ID, CAT_ID, SOURCE_ID, "SOURCE", RULE_FORM_ID, FROM_FORM_ID, STEM_FORM_ID, ORTHO_FORM_ID, TENGWAR, MARK, NEOVERSION, ELDAMO_PAGEID, ORDERFIELD, ENTRY_CLASS_ID, ENTRY_TYPE_ID) VALUES ';
     $insert_form = 'INSERT INTO ' . $schema . 'FORM (ID, TXT) VALUES ';
     $insert_gloss =
       'INSERT INTO ' . $schema . 'GLOSS (ID, LANGUAGE_ID, TXT) VALUES ';
