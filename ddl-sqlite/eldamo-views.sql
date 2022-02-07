@@ -240,16 +240,18 @@ SELECT e.ID id
   , g.TXT gloss
   , c.LABEL cat
   , sf.TXT stem
-  , t2.TXT entry_class
-  , t1.TXT entry_type
+  , e.ENTRY_CLASS_ID
+  , t1.TXT entry_class
+  , e.ENTRY_TYPE_ID
+  , t2.TXT entry_type
 FROM entry e
 JOIN form f ON e.FORM_ID = f.ID
 JOIN language l ON e.language_id = l.id
 JOIN gloss g ON e.GLOSS_ID = g.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
-JOIN TYPE t1 ON e.ENTRY_TYPE_ID = t1.ID 
-JOIN TYPE t2 ON e.ENTRY_CLASS_ID = t2.ID;
+JOIN TYPE t1 ON e.ENTRY_CLASS_ID = t1.ID
+JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID;
 
 -- entry_doc source
 

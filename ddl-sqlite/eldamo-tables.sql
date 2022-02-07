@@ -42,6 +42,8 @@ CREATE TABLE LANGUAGE (
     NAME varchar(255) NOT NULL,
     LANG varchar(10),
     PARENT_ID integer,
+    LIST_ORDER integer,
+    CATEGORY integer,
     PRIMARY KEY (ID),
     FOREIGN KEY (PARENT_ID) REFERENCES LANGUAGE (ID)
 );
