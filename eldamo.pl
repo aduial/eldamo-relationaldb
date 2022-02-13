@@ -1219,7 +1219,7 @@ sub loadvariables {
         1 => {
             parent => 0,
             lang   => "all",
-            name   => "Eldarin Languages",
+            name   => "All Languages",
             order  => 10,
             ctg    => 0,
         },
