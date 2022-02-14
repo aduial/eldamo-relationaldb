@@ -161,7 +161,7 @@ ORDER BY erf.ID;
 -- lexicon_header source
 
 CREATE VIEW lexicon_header AS
-SELECT e.ID entry_id, f.TXT, l.LANG, es.speechtypes, c.LABEL 
+SELECT e.ID entry_id, l.LANG language, f.TXT form, es.speechtypes type, g.TXT gloss, c.LABEL cat
 FROM ENTRY e 
 JOIN FORM f ON e.FORM_ID = f.ID 
 JOIN entry_speech es ON es.entry = e.id
@@ -192,12 +192,12 @@ GROUP BY entry_refs.entry_id;
 
 CREATE VIEW lexicon_related AS
 SELECT e1.ID entry_id
-     , f4.TXT || CASE WHEN g4.TXT IS NULL THEN '' ELSE ' "' || g4.TXT || '"' END || ' ' || ed3.doc || ' ' || f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END
-     , f4.TXT form1
-     , g4.TXT gloss1
-     , ed3.doc doc
-     , f2.TXT form2
-     , g2.TXT gloss2
+     , f4.TXT || CASE WHEN g4.TXT IS NULL THEN '' ELSE ' "' || g4.TXT || '"' END || ' ' || ed3.doc || ' ' || f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END as txt
+     , f4.TXT form_from
+     , g4.TXT gloss_from
+     , ed3.doc relation
+     , f2.TXT form_to
+     , g2.TXT gloss_to
 FROM ENTRY e1
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
@@ -211,12 +211,12 @@ WHERE e3.ENTRY_TYPE_ID = 113
 AND e1.PARENT_ID IS NULL 
 UNION ALL
 SELECT e1.ID entry_id
-     , f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END || ' ' || ed3.doc || ' ' || f3.TXT || CASE WHEN g3.TXT IS NULL THEN '' ELSE ' "' || g3.TXT || '"' END
-     , f2.TXT form1 
-     , g2.TXT gloss1
-     , ed3.doc doc
-     , f3.TXT form2
-     , g3.TXT gloss2
+     , f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END || ' ' || ed3.doc || ' ' || f3.TXT || CASE WHEN g3.TXT IS NULL THEN '' ELSE ' "' || g3.TXT || '"' END as txt
+     , f2.TXT form_from
+     , g2.TXT gloss_from
+     , ed3.doc relation
+     , f3.TXT form_to
+     , g3.TXT gloss_to
 FROM ENTRY e1
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
@@ -235,23 +235,25 @@ CREATE VIEW simplexicon AS
 SELECT e.ID id
   , e.MARK mark
   , f.TXT form
-  , e.language_id language_id
-  , l.name languagename
+  , e.language_id form_lang_id
+  , l.LANG form_lang_abbr
   , g.TXT gloss
+  , g.language_id gloss_lang_id
   , c.LABEL cat
   , sf.TXT stem
-  , e.ENTRY_CLASS_ID
+  , e.ENTRY_CLASS_ID entry_class_id
   , t1.TXT entry_class
-  , e.ENTRY_TYPE_ID
+  , e.ENTRY_TYPE_ID entry_type_id
   , t2.TXT entry_type
 FROM entry e
 JOIN form f ON e.FORM_ID = f.ID
-JOIN language l ON e.language_id = l.id
+JOIN LANGUAGE l ON e.LANGUAGE_ID = l.ID 
 JOIN gloss g ON e.GLOSS_ID = g.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
 JOIN TYPE t1 ON e.ENTRY_CLASS_ID = t1.ID
-JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID;
+JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID
+WHERE e.ENTRY_CLASS_ID = 600;
 
 -- entry_doc source
 
