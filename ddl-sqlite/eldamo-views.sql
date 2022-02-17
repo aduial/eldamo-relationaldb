@@ -145,18 +145,17 @@ AND e2.ENTRY_TYPE_ID = 106;
 
 -- lexicon_glosses source
 
-CREATE VIEW lexicon_glosses AS
-SELECT ewd.ID entry_id
+CREATE VIEW lexicon_glosses AS 
+SELECT e.ID entry_id
 , g.TXT gloss
-, (s.PREFIX || '/' || Replace(Group_concat(DISTINCT ltrim(substr(erf.SOURCE, (instr(erf.SOURCE, '/') + 1), (instr(erf.SOURCE, '.') - ((instr(erf.SOURCE, '/') + 1)))), 0)
+, (s.PREFIX || '/' || Replace(Group_concat( ltrim(substr(er.SOURCE, (instr(er.SOURCE, '/') + 1), (instr(er.SOURCE, '.') - ((instr(er.SOURCE, '/') + 1)))), 0)
 ), ',', ', ')) AS reference
-FROM ENTRY ewd
-JOIN ENTRY erf ON erf.PARENT_ID  = ewd.ID 
-JOIN SOURCE s ON s.ID = erf.SOURCE_ID 
-JOIN GLOSS g ON erf.GLOSS_ID = g.ID 
-WHERE erf.ENTRY_TYPE_ID = 121
-GROUP BY g.ID
-ORDER BY erf.ID;
+FROM ENTRY e
+INNER JOIN ENTRY er ON er.PARENT_ID  = e.ID 
+JOIN GLOSS g ON er.GLOSS_ID = g.ID 
+JOIN "SOURCE" s ON s.ID = er.SOURCE_ID 
+GROUP BY gloss, e.ID 
+ORDER BY er.ID;
 
 -- lexicon_header source
 
@@ -192,10 +191,9 @@ GROUP BY entry_refs.entry_id;
 
 CREATE VIEW lexicon_related AS
 SELECT e1.ID entry_id
-     , f4.TXT || CASE WHEN g4.TXT IS NULL THEN '' ELSE ' "' || g4.TXT || '"' END || ' ' || ed3.doc || ' ' || f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END as txt
      , f4.TXT form_from
      , g4.TXT gloss_from
-     , ed3.doc relation
+     , CASE WHEN ed3.doc IS NULL THEN ed4.doc ELSE ed3.doc END relation
      , f2.TXT form_to
      , g2.TXT gloss_to
 FROM ENTRY e1
@@ -205,16 +203,16 @@ LEFT OUTER JOIN GLOSS g2 ON g2.id = e2.GLOSS_ID
 JOIN ENTRY e3 ON e3.FORM_ID = e2.FORM_ID AND e3.SOURCE = e2.SOURCE 
 LEFT OUTER JOIN entry_doc ed3 ON e3.ID = ed3.entry_id 
 JOIN ENTRY e4 ON e4.ID = e3.PARENT_ID 
+LEFT OUTER JOIN entry_doc ed4 ON e4.ID = ed4.entry_id 
 JOIN FORM f4 ON f4.id = e4.FORM_ID
 LEFT OUTER JOIN GLOSS g4 ON g4.id = e4.GLOSS_ID
 WHERE e3.ENTRY_TYPE_ID = 113
 AND e1.PARENT_ID IS NULL 
 UNION ALL
 SELECT e1.ID entry_id
-     , f2.TXT || CASE WHEN g2.TXT IS NULL THEN '' ELSE ' "' || g2.TXT || '"' END || ' ' || ed3.doc || ' ' || f3.TXT || CASE WHEN g3.TXT IS NULL THEN '' ELSE ' "' || g3.TXT || '"' END as txt
      , f2.TXT form_from
      , g2.TXT gloss_from
-     , ed3.doc relation
+     , CASE WHEN ed3.doc IS NULL THEN ed2.doc ELSE ed3.doc END relation
      , f3.TXT form_to
      , g3.TXT gloss_to
 FROM ENTRY e1
@@ -225,8 +223,10 @@ JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID
 JOIN FORM f3 ON f3.ID = e3.FORM_ID 
 LEFT OUTER JOIN GLOSS g3 ON g3.ID = e3.GLOSS_ID 
 LEFT OUTER JOIN entry_doc ed3 ON e3.ID = ed3.entry_id 
+LEFT OUTER JOIN entry_doc ed2 ON e2.ID = ed2.entry_id 
 WHERE e3.ENTRY_TYPE_ID = 113
 AND e1.PARENT_ID IS NULL;
+
 
 
 -- simplexicon source
