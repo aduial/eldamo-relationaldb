@@ -114,7 +114,7 @@ CREATE VIEW lexicon_cognates AS
 SELECT DISTINCT e1.ID entry_id
      , l5.LANG language
      , f5.TXT form
-     , g5.TXT gloss
+     , CASE WHEN g5.TXT IS NULL THEN '' ELSE g5.TXT END gloss
      , REPLACE(group_concat(substr( e4.source ,  0, instr(e4.source , '.') ) ), ',', ', ') sources
 FROM ENTRY e1 
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
@@ -132,7 +132,7 @@ UNION
 SELECT e1.ID entry_id
      , l3.LANG language
      , f3.TXT form
-     , g3.TXT gloss
+     , CASE WHEN g3.TXT IS NULL THEN '' ELSE g3.TXT END gloss
      , '[word cognate]' sources
 FROM ENTRY e1
 JOIN ENTRY e2 ON e2.FORM_ID = e1.FORM_ID AND e2.LANGUAGE_ID  = e1.LANGUAGE_ID 
@@ -142,6 +142,7 @@ JOIN FORM f3 ON e3.FORM_ID = f3.ID
 LEFT OUTER JOIN GLOSS g3 ON e3.GLOSS_ID = g3.ID
 WHERE (e1.ENTRY_TYPE_ID = 100 OR e1.ENTRY_TYPE_ID = 120)  
 AND e2.ENTRY_TYPE_ID = 106;
+
 
 -- lexicon_glosses source
 
@@ -191,11 +192,11 @@ GROUP BY entry_refs.entry_id;
 
 CREATE VIEW lexicon_related AS
 SELECT e1.ID entry_id
-     , f4.TXT form_from
-     , g4.TXT gloss_from
+     , CASE WHEN f4.TXT IS NULL THEN '' ELSE f4.TXT END form_from
+     , CASE WHEN g4.TXT IS NULL THEN '' ELSE g4.TXT END gloss_from
      , CASE WHEN ed3.doc IS NULL THEN ed4.doc ELSE ed3.doc END relation
-     , f2.TXT form_to
-     , g2.TXT gloss_to
+     , CASE WHEN f2.TXT IS NULL THEN '' ELSE f2.TXT END form_to
+     , CASE WHEN g2.TXT IS NULL THEN '' ELSE g2.TXT END gloss_to
 FROM ENTRY e1
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
@@ -210,11 +211,11 @@ WHERE e3.ENTRY_TYPE_ID = 113
 AND e1.PARENT_ID IS NULL 
 UNION ALL
 SELECT e1.ID entry_id
-     , f2.TXT form_from
-     , g2.TXT gloss_from
+     , CASE WHEN f2.TXT IS NULL THEN '' ELSE f2.TXT END form_from
+     , CASE WHEN g2.TXT IS NULL THEN '' ELSE g2.TXT END gloss_from
      , CASE WHEN ed3.doc IS NULL THEN ed2.doc ELSE ed3.doc END relation
-     , f3.TXT form_to
-     , g3.TXT gloss_to
+     , CASE WHEN f3.TXT IS NULL THEN '' ELSE f3.TXT END form_to
+     , CASE WHEN g3.TXT IS NULL THEN '' ELSE g3.TXT END gloss_to
 FROM ENTRY e1
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
@@ -229,18 +230,21 @@ AND e1.PARENT_ID IS NULL;
 
 
 
+
 -- simplexicon source
 
 CREATE VIEW simplexicon AS
 SELECT e.ID id
   , e.MARK mark
   , f.TXT form
+  , f.NORMALTXT nform
   , e.language_id form_lang_id
   , l.LANG form_lang_abbr
-  , g.TXT gloss
-  , g.language_id gloss_lang_id
+  , CASE WHEN g.TXT IS NULL THEN '' ELSE g.TXT END gloss
+  , CASE WHEN g.language_id IS NULL THEN '' ELSE g.language_id END gloss_lang_id
   , c.LABEL cat
   , sf.TXT stem
+  , ec.created_by created_by
   , e.ENTRY_CLASS_ID entry_class_id
   , t1.TXT entry_class
   , e.ENTRY_TYPE_ID entry_type_id
@@ -248,12 +252,13 @@ SELECT e.ID id
 FROM entry e
 JOIN form f ON e.FORM_ID = f.ID
 JOIN LANGUAGE l ON e.LANGUAGE_ID = l.ID 
-JOIN gloss g ON e.GLOSS_ID = g.ID
+LEFT OUTER JOIN gloss g ON e.GLOSS_ID = g.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
-JOIN TYPE t1 ON e.ENTRY_CLASS_ID = t1.ID
-JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID
-WHERE e.ENTRY_CLASS_ID = 600;
+LEFT OUTER JOIN TYPE t1 ON e.ENTRY_CLASS_ID = t1.ID
+LEFT OUTER JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID
+LEFT OUTER JOIN entry_created ec ON e.ID = ec.entry_id
+WHERE (e.ENTRY_CLASS_ID = 600 OR e.ENTRY_CLASS_ID = 603);
 
 -- entry_doc source
 
