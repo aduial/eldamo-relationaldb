@@ -279,6 +279,20 @@ GROUP BY from_form, to_id
 ORDER BY entry_id, to_id;
 
 
+-- lexicon_examples source
+
+CREATE VIEW lexicon_examples AS
+SELECT e1.ID entry_id
+, f3.TXT form
+, e3.source source
+FROM ENTRY e1 
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID
+JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID
+JOIN FORM f3 ON f3.ID = e3.FORM_ID 
+WHERE e1.ENTRY_TYPE_ID IN (100, 120)
+AND e3.ENTRY_TYPE_ID = 129;
+
+
 -- lexicon_glosses source
 
 CREATE VIEW lexicon_glosses AS
@@ -429,6 +443,25 @@ WHERE e1.ENTRY_TYPE_ID IN (100, 120)
 AND e2.ENTRY_TYPE_ID = 113 -- RELATED
 AND e3.ENTRY_TYPE_ID IN (100, 120)
 ORDER BY entry_id;
+
+
+-- lexicon_see source
+
+CREATE VIEW lexicon_see AS
+SELECT e1.ID entry_id
+, f1.TXT form
+, l1.LANG lang
+, t2.TXT see
+, e3.ID see_id
+FROM entry e1
+JOIN FORM f1 ON e1.FORM_ID = f1.ID 
+JOIN LANGUAGE l1 ON e1.LANGUAGE_ID = l1.ID 
+JOIN entry e2 ON e2.PARENT_ID = e1.ID
+JOIN TYPE t2 ON t2.ID = e2.ENTRY_TYPE_ID
+JOIN entry e3 ON e3.LANGUAGE_ID = e2.LANGUAGE_ID AND e3.FORM_ID = e2.FORM_ID 
+WHERE e2.ENTRY_TYPE_ID IN (116, 117, 118, 119)
+AND e1.ENTRY_TYPE_ID IN (100, 120)
+AND e3.ENTRY_TYPE_ID IN (100, 120);
 
 
 -- lexicon_variations source
