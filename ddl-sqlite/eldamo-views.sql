@@ -127,19 +127,26 @@ WHERE t_parent.TXT = 'inflect-variant-type';
 
 CREATE VIEW lexicon_changes AS
 SELECT e1.ID entry_id
-    , e2.MARK mark
-    , f2.TXT form_from
+    , e2.MARK mark_from
+    , f2.TXT || CASE WHEN f31.TXT IS NULL THEN '' ELSE ' >> ' || f31.TXT END form_from
+    , e4.MARK mark_to
     , f3.TXT form_to
-    , group_concat(e3.REF_SOURCES, '; ') sources
+    , group_concat(e3.REF_SOURCES, '; ') sources   
+    , e5.ID id_to
 FROM ENTRY e1 -- entry
 JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID  
-LEFT OUTER JOIN FORM f2 ON f2.ID = e2.FORM_ID
+JOIN FORM f2 ON f2.ID = e2.FORM_ID
 JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID  
-LEFT OUTER JOIN FORM f3 ON f3.ID = e3.FORM_ID 
+JOIN FORM f3 ON f3.ID = e3.FORM_ID 
+JOIN ENTRY e4 ON e4.SOURCE = e3.SOURCE
+JOIN ENTRY e5 ON e4.PARENT_ID = e5.ID  
+LEFT OUTER JOIN FORM f31 ON f31.ID = e3.RULE_FORM_ID 
 WHERE e3.ENTRY_TYPE_ID = 122 -- CHANGE
-AND e2.ENTRY_TYPE_ID = 121 -- ref
+AND e2.ENTRY_TYPE_ID = 121 -- REF
 AND e1.ENTRY_TYPE_ID IN (100, 120)
-GROUP BY e2.FORM_ID, e3.FORM_ID;
+AND e4.ENTRY_TYPE_ID = 121 -- REF
+GROUP BY e2.FORM_ID, e3.FORM_ID, e3.RULE_FORM_ID 
+ORDER BY e3.ID;
 
 
 -- lexicon_cognates source
@@ -195,12 +202,12 @@ GROUP BY form;
 -- lexicon_combine source
 
 CREATE VIEW lexicon_combine AS
-SELECT e1.ID from_id
-, f1.TXT from_form
-, l1.LANG from_lang
-, e3.ID to_id
-, f3.TXT to_form
-, l3.LANG to_lang
+SELECT e1.ID entry_id
+, f1.TXT form_from
+, l1.LANG lang_from
+, e3.ID id_to
+, f3.TXT form_to
+, l3.LANG lang_to
 FROM ENTRY e1 
 JOIN FORM f1 ON e1.FORM_ID = f1.ID 
 JOIN LANGUAGE l1 ON e1.LANGUAGE_ID  = l1.ID 
@@ -216,21 +223,21 @@ AND e3.ENTRY_TYPE_ID IN (100, 120) -- WORD OR ENTRY;
 
 CREATE VIEW lexicon_elements AS
 SELECT entry_id 
-, from_form
-, from_gloss
+, form_from
+, gloss_from
 , group_concat(inflection, '; ') inflection
-, to_id
-, to_form
-, to_gloss
+, id_to
+, form_to
+, gloss_to
 FROM (
 SELECT DISTINCT e1.ID entry_id
-, f1.TXT from_form
-, g1.TXT from_gloss
+, f1.TXT form_from
+, g1.TXT gloss_from
 , CASE WHEN ei.inflection IS NULL THEN '' ELSE 
  group_concat(DISTINCT ei.inflection) END inflection
-, e3.ID to_id
-, f3.TXT to_form
-, g3.TXT to_gloss
+, e3.ID id_to
+, f3.TXT form_to
+, g3.TXT gloss_to
 FROM ENTRY e1 
 JOIN FORM f1 ON e1.FORM_ID = f1.ID 
 LEFT OUTER JOIN GLOSS g1 ON e1.GLOSS_ID = g1.ID
@@ -246,15 +253,15 @@ AND e3.ENTRY_TYPE_ID IN (100, 120)
 GROUP BY e2.ID
 UNION
 SELECT e1.ID entry_id
-, f1.TXT from_form
-, g1.TXT from_gloss
+, f1.TXT form_from
+, g1.TXT gloss_from
 , group_concat(DISTINCT 
  (CASE WHEN (ei3.inflection IS NULL OR ei3.inflection = ei41.inflection) THEN '' ELSE ei3.inflection END ||
   CASE WHEN (ei3.inflection IS NOT NULL AND ei3.inflection != ei41.inflection) THEN ', ' ELSE '' END ||
   CASE WHEN ei41.inflection IS NULL THEN '' ELSE ei41.inflection END)) inflection
-, e5.ID to_id
-, f5.TXT to_form
-, g5.TXT to_gloss
+, e5.ID id_to
+, f5.TXT form_to
+, g5.TXT gloss_to
 FROM ENTRY e1 
 JOIN FORM f1 ON e1.FORM_ID = f1.ID 
 LEFT OUTER JOIN GLOSS g1 ON e1.GLOSS_ID = g1.ID
@@ -275,8 +282,8 @@ AND e41.ENTRY_TYPE_ID = 111 -- INFLECT
 AND e5.ENTRY_TYPE_ID IN (100, 120)
 GROUP BY e3.ID
 )
-GROUP BY from_form, to_id
-ORDER BY entry_id, to_id;
+GROUP BY form_from, id_to
+ORDER BY entry_id, id_to;
 
 
 -- lexicon_examples source
@@ -296,24 +303,38 @@ AND e3.ENTRY_TYPE_ID = 129;
 -- lexicon_glosses source
 
 CREATE VIEW lexicon_glosses AS
-SELECT e1.ID entry_id
+SELECT entry_id
+, gloss
+, REPLACE(group_concat(sources), ',', '; ') sources
+FROM (
+SELECT DISTINCT e1.ID entry_id
 , g2.TXT gloss
-, group_concat(e2.REF_SOURCES || CASE WHEN e3.ID IS NULL THEN ' (' || f2.TXT || ')' ELSE '' END, '; ') AS reference
-FROM ENTRY e1
-JOIN TYPE t1 ON e1.ENTRY_TYPE_ID = t1.ID
-INNER JOIN ENTRY e2 ON e2.PARENT_ID  = e1.ID 
-JOIN GLOSS g2 ON e2.GLOSS_ID = g2.ID 
+, e2.REF_SOURCES || CASE WHEN f2.ID IS NOT NULL THEN ' (' || f2.NORMALTXT || ')' ELSE '' END sources
+FROM ENTRY e1   -- word element 
+JOIN lgloss g1 ON e1.GLOSS_ID  = g1.ID  
+JOIN ENTRY e2 ON e2.PARENT_ID  = e1.ID 
+JOIN lgloss g2 ON e2.GLOSS_ID = g2.ID 
 LEFT OUTER JOIN FORM f2 ON e2.FORM_ID = F2.ID 
-JOIN SOURCE s2 ON s2.ID = e2.SOURCE_ID 
-LEFT OUTER JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID
-WHERE NOT EXISTS (
-SELECT *
-FROM ENTRY e4
-WHERE e4.PARENT_ID = e2.ID
-AND e4.ENTRY_TYPE_ID = 130) -- related REF ... it's complicated :(
-AND e1.ENTRY_TYPE_ID IN (100, 120)
-GROUP BY g2.TXT, e1.ID 
-ORDER BY e2.ID;
+WHERE e2.ENTRY_TYPE_ID = 121 -- REF
+AND e1.ENTRY_CLASS_ID IN (600, 603) -- lexical OR root
+AND e1.ENTRY_TYPE_ID IN (100, 120) -- word
+EXCEPT
+SELECT DISTINCT e1.ID entry_id
+, g2.TXT gloss
+, e2.REF_SOURCES || CASE WHEN f2.ID IS NOT NULL THEN ' (' || f2.NORMALTXT || ')' ELSE '' END sources
+FROM ENTRY e1   -- word element 
+JOIN lgloss g1 ON e1.GLOSS_ID  = g1.ID  
+JOIN ENTRY e2 ON e2.PARENT_ID  = e1.ID 
+JOIN lgloss g2 ON e2.GLOSS_ID = g2.ID 
+LEFT OUTER JOIN FORM f2 ON e2.FORM_ID = F2.ID 
+JOIN ENTRY e3 ON (e3.PARENT_ID  = e2.ID 
+AND ((e3.ENTRY_TYPE_ID = 111 AND e1.ENTRY_CLASS_ID = 600) -- no lexical inflections
+OR e3.ENTRY_TYPE_ID = 124)) -- nor corrections
+WHERE e2.ENTRY_TYPE_ID = 121 -- REF
+AND e1.ENTRY_CLASS_ID IN (600, 603) -- lexical OR root
+AND e1.ENTRY_TYPE_ID IN (100, 120)) -- word
+GROUP BY gloss
+ORDER BY entry_id;
 
 
 -- lexicon_header source
@@ -338,7 +359,7 @@ SELECT DISTINCT e.ID entry_id
      , rf.TXT form
      , riv.inflections inflections
      , rg.TXT gloss
-     , REPLACE(group_concat(DISTINCT re.REF_SOURCES || CASE WHEN d.TXT IS NULL THEN '' ELSE ': ' || d.TXT END), ',', '; ') refsources
+     , REPLACE(group_concat(DISTINCT re.REF_SOURCES || CASE WHEN d.TXT IS NULL THEN '' ELSE ': ' || d.TXT END), ',', '; ') AS 'references'
 FROM entry e
 JOIN entry re ON re.PARENT_ID = e.ID 
 JOIN form rf ON re.FORM_ID = rf.ID
@@ -449,8 +470,8 @@ ORDER BY entry_id;
 
 CREATE VIEW lexicon_see AS
 SELECT e1.ID entry_id
+, l1.LANG language
 , f1.TXT form
-, l1.LANG lang
 , t2.TXT see
 , e3.ID see_id
 FROM entry e1
@@ -467,39 +488,34 @@ AND e3.ENTRY_TYPE_ID IN (100, 120);
 -- lexicon_variations source
 
 CREATE VIEW lexicon_variations AS
-SELECT entry_id
-, mark
-, lform 
-, type_id
-, REPLACE(group_concat(DISTINCT REF_SOURCES), ',', '; ') varsource
-FROM (
-SELECT e.ID entry_id
-, re.mark mark
-, rf.LTXT lform
-, rer.ENTRY_TYPE_ID type_id
-, rer.REF_SOURCES
-FROM ENTRY e
-JOIN ENTRY re ON re.PARENT_ID  = e.ID 
-JOIN lform rf ON re.FORM_ID = rf.ID  
-LEFT OUTER JOIN ENTRY rer ON rer.PARENT_ID = re.ID 
-WHERE re.ENTRY_TYPE_ID = 121
-AND rer.ENTRY_TYPE_ID IN (114, 122)
-AND e.ENTRY_CLASS_ID = 600
-UNION 
-SELECT e.ID entry_id
-, re.mark
-, rf.LTXT lform
-, re.ENTRY_TYPE_ID type_id
-, re.REF_SOURCES
-FROM ENTRY e
-JOIN ENTRY re ON re.PARENT_ID  = e.ID 
-JOIN lform rf ON re.FORM_ID = rf.ID  
-WHERE NOT EXISTS (
-SELECT *
-FROM ENTRY rer
-WHERE rer.PARENT_ID = re.ID)
-AND re.ENTRY_TYPE_ID = 121)
-GROUP BY lform;
+SELECT e1.ID entry_id
+, e2.mark mark
+, f2.NORMALTXT form
+, REPLACE(group_concat(DISTINCT e2.REF_SOURCES), ',', '; ') sources
+FROM ENTRY e1                                                           -- word element 
+JOIN lform f1 ON e1.FORM_ID = f1.ID  
+JOIN ENTRY e2 ON e2.PARENT_ID  = e1.ID --AND f1.NORMALTXT = f2.NORMALTXT -- ON non-matching normalised forms
+JOIN lform f2 ON e2.FORM_ID = f2.ID 
+AND e2.ENTRY_TYPE_ID = 121 -- REF
+AND e1.ENTRY_CLASS_ID IN (600, 603) -- lexical OR root
+AND e1.ENTRY_TYPE_ID IN (100, 120) -- WORD
+GROUP BY f2.NORMALTXT 
+EXCEPT -- exclude rows that have specific child elements
+SELECT e1.ID entry_id
+, e2.mark mark
+, f2.NORMALTXT form
+, REPLACE(group_concat(DISTINCT e2.REF_SOURCES), ',', '; ') sources
+FROM ENTRY e1                                                           -- word element 
+JOIN lform f1 ON e1.FORM_ID = f1.ID  
+JOIN ENTRY e2 ON e2.PARENT_ID  = e1.ID --AND f1.NORMALTXT != f2.NORMALTXT -- ON non-matching normalised forms
+JOIN lform f2 ON e2.FORM_ID = f2.ID 
+JOIN ENTRY e3 ON (e3.PARENT_ID  = e2.ID 
+AND ((e3.ENTRY_TYPE_ID = 111 AND e1.ENTRY_CLASS_ID = 600) -- lexical inflections
+OR e3.ENTRY_TYPE_ID = 124)) -- or corrections
+WHERE e2.ENTRY_TYPE_ID = 121 -- REF
+AND e1.ENTRY_CLASS_ID IN (600, 603) -- lexical OR root
+AND e1.ENTRY_TYPE_ID IN (100, 120) -- word
+GROUP BY f2.NORMALTXT;
 
 
 -- lexicon_word_cognates source
