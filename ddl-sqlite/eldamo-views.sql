@@ -257,68 +257,20 @@ AND e3.ENTRY_TYPE_ID IN (100, 120) -- WORD OR ENTRY;
 -- lexicon_elements source
 
 CREATE VIEW lexicon_elements AS
-SELECT entry_id 
-, form_from
-, gloss_from
-, group_concat(inflection, '; ') inflection
-, id_to
-, form_to
-, gloss_to
+SELECT entry_id
+, language
+, form
+, gloss
+, inflections
+, REPLACE(group_concat(DISTINCT sources), ',', '; ') sources
+, element_id
 FROM (
-SELECT DISTINCT e1.ID entry_id
-, f1.TXT form_from
-, g1.TXT gloss_from
-, CASE WHEN ei.inflection IS NULL THEN '' ELSE 
- group_concat(DISTINCT ei.inflection) END inflection
-, e3.ID id_to
-, f3.TXT form_to
-, g3.TXT gloss_to
-FROM ENTRY e1 
-JOIN FORM f1 ON e1.FORM_ID = f1.ID 
-LEFT OUTER JOIN GLOSS g1 ON e1.GLOSS_ID = g1.ID
-JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
-LEFT OUTER JOIN entry_inflection ei ON e2.ID = ei.entry_id 
-JOIN ENTRY e3 ON e3.LANGUAGE_ID = e2.LANGUAGE_ID AND e3.FORM_ID  = e2.FORM_ID
-JOIN FORM f3 ON e3.FORM_ID = f3.ID 
-LEFT OUTER JOIN GLOSS g3 ON e3.GLOSS_ID = g3.ID
-WHERE e1.ENTRY_TYPE_ID IN (100, 120)
-AND e1.ENTRY_CLASS_ID IN (600, 603)
-AND e2.ENTRY_TYPE_ID = 101 -- ELEMENT
-AND e3.ENTRY_TYPE_ID IN (100, 120)
-GROUP BY e2.ID
+SELECT * FROM ref_elements
 UNION
-SELECT e1.ID entry_id
-, f1.TXT form_from
-, g1.TXT gloss_from
-, group_concat(DISTINCT 
- (CASE WHEN (ei3.inflection IS NULL OR ei3.inflection = ei41.inflection) THEN '' ELSE ei3.inflection END ||
-  CASE WHEN (ei3.inflection IS NOT NULL AND ei3.inflection != ei41.inflection) THEN ', ' ELSE '' END ||
-  CASE WHEN ei41.inflection IS NULL THEN '' ELSE ei41.inflection END)) inflection
-, e5.ID id_to
-, f5.TXT form_to
-, g5.TXT gloss_to
-FROM ENTRY e1 
-JOIN FORM f1 ON e1.FORM_ID = f1.ID 
-LEFT OUTER JOIN GLOSS g1 ON e1.GLOSS_ID = g1.ID
-JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID 
-JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID 
-LEFT OUTER JOIN entry_inflection ei3 ON e3.ID = ei3.entry_id 
-JOIN ENTRY e4 ON e4.SOURCE = e3.SOURCE
-LEFT OUTER JOIN ENTRY e41 ON e41.PARENT_ID = e4.ID
-LEFT OUTER JOIN entry_inflection ei41 ON e41.ID = ei41.entry_id 
-JOIN ENTRY e5 ON e4.PARENT_ID = e5.ID
-JOIN FORM f5 ON e5.FORM_ID = f5.ID 
-LEFT OUTER JOIN GLOSS g5 ON e5.GLOSS_ID = g5.ID
-WHERE e1.ENTRY_TYPE_ID IN (100, 120)
-AND e2.ENTRY_TYPE_ID = 121 -- REF
-AND e3.ENTRY_TYPE_ID = 101 -- ELEMENT
-AND e4.ENTRY_TYPE_ID = 121 -- REF
-AND e41.ENTRY_TYPE_ID = 111 -- INFLECT
-AND e5.ENTRY_TYPE_ID IN (100, 120)
-GROUP BY e3.ID
+SELECT * FROM word_elements
 )
-GROUP BY form_from, id_to
-ORDER BY entry_id, id_to;
+GROUP BY entry_id, element_id
+ORDER BY entry_id, element_id;
 
 
 -- lexicon_examples source
@@ -552,6 +504,30 @@ g.LANGUAGE_ID as LANGUAGE_ID,
 g.TXT AS TXT,
 lower(g.TXT) AS LTXT
 FROM GLOSS g;
+
+
+-- ref_elements source
+
+CREATE VIEW ref_elements AS
+SELECT e1.ID entry_id
+, CASE WHEN e1.LANGUAGE_ID != e5.LANGUAGE_ID THEN l5.LANG ELSE '' END language
+, f5.TXT form
+, g5.TXT gloss
+, ei3.inflection inflections
+, e3.REF_SOURCES sources
+, e5.ID element_id
+FROM ENTRY e1
+JOIN lform f1 ON e1.FORM_ID = f1.ID  
+LEFT OUTER JOIN lgloss g1 ON e1.FORM_ID = g1.ID  
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID AND e2.ENTRY_TYPE_ID = 121  -- ref
+JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID AND e3.ENTRY_TYPE_ID = 101 -- element
+LEFT OUTER JOIN entry_inflection ei3 ON e3.ID = ei3.entry_id -- inflections
+JOIN ENTRY e4 ON e4.SOURCE = e3.SOURCE AND e4.ENTRY_TYPE_ID = 121 -- ref
+JOIN ENTRY e5 ON e4.PARENT_ID = e5.ID AND e5.ENTRY_TYPE_ID IN (100, 120) -- word
+JOIN lform f5 ON e5.FORM_ID = f5.ID  -- form
+LEFT OUTER JOIN lgloss g5 ON e5.GLOSS_ID = g5.ID  
+LEFT OUTER JOIN LANGUAGE l5 ON e5.LANGUAGE_ID = l5.ID
+WHERE e1.ENTRY_TYPE_ID IN (100, 120);
 
 
 -- ref_ernediad source
@@ -791,3 +767,53 @@ WHERE e2.ENTRY_TYPE_ID = 121 -- REF
 AND e1.ENTRY_CLASS_ID IN (600, 603) -- lexical OR root
 AND e1.ENTRY_TYPE_ID IN (100, 120) -- WORD
 ORDER BY 1, 2;
+
+
+-- word_elements source
+
+CREATE VIEW word_elements AS
+SELECT e1.ID entry_id
+, CASE WHEN e1.LANGUAGE_ID != e3.LANGUAGE_ID THEN l3.LANG ELSE '' END language
+, f3.TXT form
+, g3.TXT gloss
+, ei2.inflection inflections
+, e2.REF_SOURCES sources
+, e3.ID element_id
+FROM ENTRY e1
+LEFT OUTER JOIN entry_inflection ei1 ON e1.ID = ei1.entry_id 
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID AND e2.ENTRY_TYPE_ID = 101
+LEFT OUTER JOIN entry_inflection ei2 ON e2.ID = ei2.entry_id 
+JOIN ENTRY e3 ON e3.LANGUAGE_ID  = e2.LANGUAGE_ID AND e3.FORM_ID = e2.FORM_ID AND e3.ENTRY_TYPE_ID IN (100, 120)
+JOIN lform f3 ON e3.FORM_ID = f3.ID  -- form
+LEFT OUTER JOIN lgloss g3 ON e3.GLOSS_ID = g3.ID 
+LEFT OUTER JOIN LANGUAGE l3 ON e3.LANGUAGE_ID = l3.ID
+WHERE e1.ENTRY_TYPE_ID IN (100, 120);
+
+
+-- word_ref_elements source
+
+CREATE VIEW word_ref_elements AS
+SELECT e1.ID entry_id
+, f6.TXT form
+, g6.TXT gloss
+, CASE WHEN e1.LANGUAGE_ID != e6.LANGUAGE_ID THEN l6.LANG ELSE '' END lang
+, CASE WHEN ei3.inflection IS NOT NULL THEN ei3.inflection  ELSE ei5.inflection END inflections
+--, e3.REF_SOURCES source
+, REPLACE(group_concat(DISTINCT e3.REF_SOURCES), ',', '; ') sources
+FROM ENTRY e1
+JOIN lform f1 ON f1.ID = e1.FORM_ID 
+JOIN LANGUAGE l1 ON l1.ID = e1.LANGUAGE_ID 
+LEFT OUTER JOIN GLOSS g1 ON g1.ID = e1.GLOSS_ID 
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID AND e2.ENTRY_TYPE_ID = 121 
+JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID AND e3.ENTRY_TYPE_ID = 101  -- for $element-ref in $word/ref/ELEMENT
+LEFT OUTER JOIN entry_inflection ei3 ON e3.ID = ei3.entry_id      -- $element-ref/@form
+JOIN ENTRY e4 ON e4.SOURCE = e3.SOURCE AND e4.ENTRY_TYPE_ID = 121 -- let $element-deref := c:get-ref($element-ref)
+LEFT OUTER JOIN ENTRY e5 ON e5.PARENT_ID = e4.ID AND e5.ENTRY_TYPE_ID = 111  -- $element-deref/inflect/
+LEFT OUTER JOIN entry_inflection ei5 ON e5.ID = ei5.entry_id      -- $element-deref/inflect/@form
+JOIN ENTRY e6 ON e6.ID = e4.PARENT_ID
+LEFT OUTER JOIN GLOSS g6 ON g6.ID = e6.GLOSS_ID 
+JOIN lform f6 ON f6.ID = e6.FORM_ID 
+JOIN LANGUAGE l6 ON l6.ID = e6.LANGUAGE_ID 
+WHERE e1.ID = 10665
+GROUP BY e6.ID
+ORDER BY e1.ID, e6.ID;
