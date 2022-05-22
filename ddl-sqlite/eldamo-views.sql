@@ -1,3 +1,22 @@
+-- child_doc source
+
+CREATE VIEW child_doc AS
+SELECT e2.ID child_id
+, d.ID doc_id
+, d.TXT doc
+, d.DOCTYPE_ID doctype_id
+, tdoc.TXT doctype
+, e2.ENTRY_TYPE_ID childtype_id
+, tchild.TXT childtype
+FROM ENTRY e2
+JOIN RELATION r ON r.FROM_ID = e2.ID
+JOIN DOC d ON r.TO_ID = d.ID 
+JOIN TYPE tdoc ON tdoc.ID = d.DOCTYPE_ID 
+JOIN TYPE tchild ON tchild.ID = e2.ENTRY_TYPE_ID 
+WHERE r.FROM_TYPE_ID = 500 -- entry
+AND r.TO_TYPE_ID = 503;
+
+
 -- class_form_type source
 
 CREATE VIEW class_form_type AS
@@ -56,12 +75,20 @@ GROUP BY e.ID;
 -- entry_doc source
 
 CREATE VIEW entry_doc AS
-SELECT r.FROM_ID entry_id, d.ID doc_id, d.TXT doc, t.TXT doctype
-FROM RELATION r
+SELECT e1.ID entry_id
+, d.ID doc_id
+, d.TXT doc
+, d.DOCTYPE_ID doctype_id
+, tdoc.TXT doctype
+FROM ENTRY e1
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID
+JOIN RELATION r ON r.FROM_ID = e2.ID
 JOIN DOC d ON r.TO_ID = d.ID 
-JOIN TYPE t ON t.ID = d.DOCTYPE_ID 
-WHERE r.FROM_TYPE_ID = 500
-AND r.TO_TYPE_ID = 503;
+JOIN TYPE tdoc ON tdoc.ID = d.DOCTYPE_ID 
+JOIN TYPE tchild ON tchild.ID = e2.ENTRY_TYPE_ID 
+WHERE r.FROM_TYPE_ID = 500 -- entry
+AND r.TO_TYPE_ID = 503 -- doc
+AND e2.ENTRY_TYPE_ID = 112;
 
 
 -- entry_inflection source
@@ -362,7 +389,7 @@ SELECT e1.ID entry_id
      , CASE WHEN e5.LANGUAGE_ID = e1.LANGUAGE_ID THEN '' ELSE l5.LANG END language_from
      , CASE WHEN f4.TXT IS NULL THEN '' ELSE '@' || f4.TXT END form_from
      , CASE WHEN g4.TXT IS NULL THEN '' ELSE g4.TXT END gloss_from
-     , CASE WHEN ed3.doc IS NULL THEN (CASE WHEN ed4.doc IS NULL THEN '' ELSE ed4.doc END) ELSE ed3.doc END relation
+     , CASE WHEN cd3.doc IS NULL THEN (CASE WHEN cd4.doc IS NULL THEN '' ELSE cd4.doc END) ELSE cd3.doc END relation
      , '' language_to
      , CASE WHEN f2.TXT IS NULL THEN '' ELSE f2.TXT END form_to
      , CASE WHEN g2.TXT IS NULL THEN '' ELSE g2.TXT END gloss_to
@@ -373,9 +400,9 @@ JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
 LEFT OUTER JOIN GLOSS g2 ON g2.id = e2.GLOSS_ID
 JOIN ENTRY e3 ON e3.SOURCE = e2.SOURCE AND e3.FORM_ID = e2.FORM_ID  
-LEFT OUTER JOIN entry_doc ed3 ON e3.ID = ed3.entry_id 
+LEFT OUTER JOIN child_doc cd3 ON e3.ID = cd3.child_id 
 JOIN ENTRY e4 ON e4.ID = e3.PARENT_ID 
-LEFT OUTER JOIN entry_doc ed4 ON e4.ID = ed4.entry_id 
+LEFT OUTER JOIN child_doc cd4 ON e4.ID = cd4.child_id 
 JOIN FORM f4 ON f4.id = e4.FORM_ID
 LEFT OUTER JOIN GLOSS g4 ON g4.id = e4.GLOSS_ID
 JOIN ENTRY e5 ON e5.ID = e4.PARENT_ID 
@@ -387,7 +414,7 @@ SELECT e1.ID entry_id
      , '' language_from
      , CASE WHEN f1.TXT IS NULL THEN '' ELSE f1.TXT END form_from
      , CASE WHEN g1.TXT IS NULL THEN '' ELSE g1.TXT END gloss_from
-     , CASE WHEN ed2.doc IS NULL THEN '' ELSE ed2.doc END relation
+     , CASE WHEN dd2.doc IS NULL THEN '' ELSE dd2.doc END relation
      , CASE WHEN e3.LANGUAGE_ID = e1.LANGUAGE_ID THEN '' ELSE l3.LANG END language_to
      , CASE WHEN f2.TXT IS NULL THEN '' ELSE '@' || f2.TXT END form_to
      , CASE WHEN g2.TXT IS NULL THEN '' ELSE g2.TXT END gloss_to
@@ -400,7 +427,7 @@ JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID
 JOIN FORM f2 ON f2.ID = e2.FORM_ID 
 LEFT OUTER JOIN GLOSS g2 ON g2.id = e2.GLOSS_ID
 JOIN ENTRY e3 ON e3.LANGUAGE_ID = e2.LANGUAGE_ID AND e3.FORM_ID = e2.FORM_ID
-LEFT OUTER JOIN entry_doc ed2 ON e2.ID = ed2.entry_id 
+LEFT OUTER JOIN child_doc dd2 ON e2.ID = dd2.child_id 
 LEFT OUTER JOIN LANGUAGE l3 ON e3.LANGUAGE_ID = l3.ID 
 WHERE e1.ENTRY_TYPE_ID IN (100, 120)
 AND e2.ENTRY_TYPE_ID = 113 -- RELATED
@@ -410,7 +437,7 @@ SELECT e1.ID entry_id
      , CASE WHEN e3.LANGUAGE_ID = e1.LANGUAGE_ID THEN '' ELSE l3.LANG END language_from
      , CASE WHEN f3.TXT IS NULL THEN '' ELSE '@' || f3.TXT END form_from
      , CASE WHEN g3.TXT IS NULL THEN '' ELSE g3.TXT END gloss_from
-     , CASE WHEN ed2.doc IS NULL THEN '' ELSE ed2.doc END relation
+     , CASE WHEN cd2.doc IS NULL THEN '' ELSE cd2.doc END relation
      , '' language_to
      , CASE WHEN f1.TXT IS NULL THEN '' ELSE f1.TXT END form_to
      , CASE WHEN g1.TXT IS NULL THEN '' ELSE g1.TXT END gloss_to
@@ -423,7 +450,7 @@ JOIN ENTRY e2 ON e2.LANGUAGE_ID = e1.LANGUAGE_ID AND e2.FORM_ID = e1.FORM_ID
 JOIN ENTRY e3 ON e2.PARENT_ID = e3.ID 
 JOIN FORM f3 ON f3.ID = e3.FORM_ID 
 LEFT OUTER JOIN GLOSS g3 ON g3.id = e3.GLOSS_ID
-LEFT OUTER JOIN entry_doc ed2 ON e2.ID = ed2.entry_id 
+LEFT OUTER JOIN child_doc cd2 ON e2.ID = cd2.child_id 
 LEFT OUTER JOIN LANGUAGE l3 ON e3.LANGUAGE_ID = l3.ID 
 WHERE e1.ENTRY_TYPE_ID IN (100, 120)
 AND e2.ENTRY_TYPE_ID = 113 -- RELATED
@@ -504,6 +531,33 @@ g.LANGUAGE_ID as LANGUAGE_ID,
 g.TXT AS TXT,
 lower(g.TXT) AS LTXT
 FROM GLOSS g;
+
+
+-- recursive_gloss source
+
+CREATE VIEW recursive_gloss AS
+SELECT DISTINCT dg.entry_id, g.TXT gloss, g.NORMALTXT ngloss, g.LANGUAGE_ID gloss_lang_id
+FROM ( 
+SELECT e1.ID entry_id,
+CASE WHEN e2.GLOSS_ID IS NULL THEN
+    (CASE WHEN e3.GLOSS_ID IS NULL THEN
+        (CASE WHEN e4.GLOSS_ID IS NULL THEN
+            (CASE WHEN e5.GLOSS_ID IS NULL THEN
+                (CASE WHEN e6.GLOSS_ID IS NULL THEN NULL 
+                 ELSE e6.GLOSS_ID END)
+             ELSE e5.GLOSS_ID END)
+         ELSE e4.GLOSS_ID END)
+     ELSE e3.GLOSS_ID END)
+ELSE e2.GLOSS_ID END gloss_id
+FROM ENTRY e1
+JOIN ENTRY e2 ON e2.PARENT_ID = e1.ID
+LEFT OUTER JOIN ENTRY e3 ON e3.PARENT_ID = e2.ID
+LEFT OUTER JOIN ENTRY e4 ON e4.PARENT_ID = e3.ID
+LEFT OUTER JOIN ENTRY e5 ON e5.PARENT_ID = e4.ID
+LEFT OUTER JOIN ENTRY e6 ON e6.PARENT_ID = e5.ID
+WHERE e1.GLOSS_ID IS NULL
+) dg
+JOIN GLOSS g ON g.ID = dg.gloss_id;
 
 
 -- ref_elements source
@@ -643,8 +697,15 @@ SELECT e.ID id
   , f.NORMALTXT nform
   , e.language_id form_lang_id
   , l.LANG form_lang_abbr
-  , CASE WHEN g.TXT IS NULL THEN '' ELSE g.TXT END gloss
-  , g.language_id gloss_lang_id
+  , CASE WHEN e.GLOSS_ID IS NULL THEN 
+        (CASE WHEN rg.gloss IS NULL THEN '[unglossed]' ELSE rg.gloss END)
+    ELSE g.TXT END gloss
+  , CASE WHEN e.GLOSS_ID IS NULL THEN 
+        (CASE WHEN rg.ngloss IS NULL THEN '[unglossed]' ELSE rg.ngloss END)
+    ELSE g.NORMALTXT END ngloss
+  , CASE WHEN e.GLOSS_ID IS NULL THEN 
+        (CASE WHEN rg.gloss_lang_id IS NULL THEN NULL ELSE rg.gloss_lang_id END)
+    ELSE g.language_id END gloss_lang_id
   , c.LABEL cat
   , sf.TXT stem
   , ec.created_by created_by
@@ -656,13 +717,14 @@ FROM entry e
 JOIN form f ON e.FORM_ID = f.ID
 JOIN LANGUAGE l ON e.LANGUAGE_ID = l.ID 
 LEFT OUTER JOIN gloss g ON e.GLOSS_ID = g.ID
+LEFT OUTER JOIN recursive_gloss rg ON rg.entry_id = e.ID
 LEFT OUTER JOIN CAT c ON e.CAT_ID = c.ID
 LEFT OUTER JOIN form sf ON e.STEM_FORM_ID = sf.id
 LEFT OUTER JOIN TYPE t1 ON e.ENTRY_CLASS_ID = t1.ID
 LEFT OUTER JOIN TYPE t2 ON e.ENTRY_TYPE_ID = t2.ID
 LEFT OUTER JOIN entry_created ec ON e.ID = ec.entry_id
 WHERE (e.ENTRY_CLASS_ID = 600 OR e.ENTRY_CLASS_ID = 603)
-ORDER BY nform ASC;
+ORDER BY f.NORMALTXT ASC;
 
 
 -- source_type source
